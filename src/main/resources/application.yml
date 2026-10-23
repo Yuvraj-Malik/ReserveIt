@@ -44,6 +44,9 @@ management:
     web:
       exposure:
         include: health
+  health:
+    mail:
+      enabled: false
 
 resrvit:
   # Seed demo departments, rooms, equipment and one user per role (password: password)
