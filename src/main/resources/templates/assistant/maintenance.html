@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Maintenance · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Maintenance</h1>
+        <p>Block an item or room for a date range. You'll see which approved bookings it hits before saving; they get a replacement or are flagged critical.</p></div></div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <form class="panel vstack gap-3" th:action="@{/assistant/maintenance/preview}" method="post">
+                <h2 class="mb-0">New block</h2>
+                <div><label class="form-label" for="equipmentId">Item</label>
+                    <select class="form-select" id="equipmentId" name="equipmentId">
+                        <option value="">— or pick a room below —</option>
+                        <option th:each="e : ${items}" th:value="${e.id}" th:text="${e.assetTag} + ' · ' + ${e.type.name}"></option>
+                    </select></div>
+                <div><label class="form-label" for="roomId">Room</label>
+                    <select class="form-select" id="roomId" name="roomId">
+                        <option value="">—</option>
+                        <option th:each="r : ${rooms}" th:value="${r.id}" th:text="${r.name}"></option>
+                    </select></div>
+                <div class="row g-2">
+                    <div class="col"><label class="form-label" for="from">From</label><input class="form-control" type="date" id="from" name="from" required th:value="${today}"></div>
+                    <div class="col"><label class="form-label" for="to">To</label><input class="form-control" type="date" id="to" name="to" required th:value="${today}"></div>
+                </div>
+                <div><label class="form-label" for="reason">Reason</label><input class="form-control" id="reason" name="reason" required></div>
+                <button class="btn btn-primary">Preview impact</button>
+            </form>
+        </div>
+        <div class="col-lg-7">
+            <div class="panel">
+                <h2>Blocks</h2>
+                <div th:if="${logs.isEmpty()}" class="empty">No maintenance logged.</div>
+                <table class="table align-middle" th:unless="${logs.isEmpty()}">
+                    <tr th:each="m : ${logs}" th:classappend="${!m.active} ? 'text-muted'">
+                        <td class="fw-semibold" th:text="${m.targetLabel}"></td>
+                        <td th:text="${#temporals.format(m.startDate, 'd MMM')} + ' – ' + ${#temporals.format(m.endDate, 'd MMM')}"></td>
+                        <td th:text="${m.reason}"></td>
+                        <td class="text-end">
+                            <form th:if="${m.active}" th:action="@{/assistant/maintenance/{id}/close(id=${m.id})}" method="post"><button class="btn btn-sm btn-outline-secondary">Close</button></form>
+                            <span th:unless="${m.active}">Closed</span>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

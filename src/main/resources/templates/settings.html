@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Settings · ResrvIt</title></head>
+<body>
+<main th:with="role=${me.role.name()}">
+    <div class="row g-4">
+        <div class="col-lg-3 d-none d-lg-block">
+            <nav class="settings-nav panel p-2" aria-label="Settings sections">
+                <a href="#profile"><i class="bi bi-person me-2"></i>Profile</a>
+                <a href="#security"><i class="bi bi-shield-lock me-2"></i>Sign-in and security</a>
+                <a href="#preferences"><i class="bi bi-bell me-2"></i>Notifications and appearance</a>
+                <a href="#availability" th:if="${role == 'FACULTY'}"><i class="bi bi-calendar-x me-2"></i>Availability</a>
+                <a href="#strikes" th:if="${role == 'STUDENT'}"><i class="bi bi-slash-circle me-2"></i>Strikes</a>
+                <a href="#system" th:if="${role == 'SUPER_ADMIN'}"><i class="bi bi-sliders me-2"></i>System rules</a>
+            </nav>
+        </div>
+        <div class="col-lg-9 vstack gap-3">
+
+            <section class="panel" id="profile">
+                <div class="panel-title"><h2>Profile</h2></div>
+                <div class="d-flex flex-wrap align-items-center gap-3 mb-4">
+                    <span class="avatar lg" th:if="${me.avatar != null}"><img th:src="${me.avatar}" alt="Your photo"></span>
+                    <span class="avatar lg" th:unless="${me.avatar != null}" th:text="${me.initials}">AV</span>
+                    <form th:action="@{/settings/avatar}" method="post" enctype="multipart/form-data" class="d-flex flex-wrap gap-2 align-items-center">
+                        <input class="form-control" type="file" name="photo" accept="image/png,image/jpeg" required aria-label="Profile photo" style="max-width:260px">
+                        <button class="btn btn-outline-primary">Upload photo</button>
+                    </form>
+                    <form th:if="${me.avatar != null}" th:action="@{/settings/avatar/remove}" method="post">
+                        <button class="btn btn-link text-danger px-0">Remove</button></form>
+                </div>
+                <form th:action="@{/settings/profile}" method="post" class="row g-3">
+                    <div class="col-md-6"><label class="form-label" for="fullName">Full name</label>
+                        <input class="form-control" id="fullName" name="fullName" th:value="${me.fullName}" required maxlength="120"></div>
+                    <div class="col-md-6"><label class="form-label" for="email">Email</label>
+                        <input class="form-control" id="email" th:value="${me.email}" disabled>
+                        <div class="form-text">Your college email can't be changed.</div></div>
+                    <div class="col-md-4"><label class="form-label" for="phone">Phone</label>
+                        <input class="form-control" id="phone" name="phone" th:value="${me.phone}" placeholder="+91 98765 43210"></div>
+                    <div class="col-md-4"><label class="form-label" for="departmentId">Department</label>
+                        <select class="form-select" id="departmentId" name="departmentId"><option value="">None</option>
+                            <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.name}" th:selected="${me.department != null and me.department.id == d.id}"></option></select></div>
+                    <div class="col-md-4"><label class="form-label" for="roll">Roll number</label>
+                        <input class="form-control" id="roll" th:value="${me.rollNo ?: '-'}" disabled></div>
+                    <div class="col-12 d-flex flex-wrap gap-3 text-muted small">
+                        <span th:text="'Role: ' + ${me.role.label}"></span>
+                        <span th:if="${me.lab != null}" th:text="'Lab: ' + ${me.lab.name}"></span>
+                        <span th:text="'Member since ' + ${#temporals.format(me.createdAt, 'd MMM yyyy')}"></span>
+                    </div>
+                    <div class="col-12"><button class="btn btn-primary">Save profile</button></div>
+                </form>
+            </section>
+
+            <section class="panel" id="security">
+                <div class="panel-title"><h2>Sign-in and security</h2></div>
+                <p class="mb-3">
+                    <i class="bi bi-google me-1"></i>
+                    <span th:if="${me.googleSub != null}">Your Google account is linked. You can sign in with Google.</span>
+                    <span th:if="${me.googleSub == null and googleEnabled}">Sign in with Google once, using this email, to link it.</span>
+                    <span th:if="${me.googleSub == null and !googleEnabled}">Google sign-in isn't set up on this server.</span>
+                </p>
+                <form th:action="@{/settings/password}" method="post" class="row g-3">
+                    <div class="col-md-4"><label class="form-label" for="current">Current password</label>
+                        <input class="form-control" type="password" id="current" name="current" required autocomplete="current-password"></div>
+                    <div class="col-md-4"><label class="form-label" for="next">New password</label>
+                        <input class="form-control" type="password" id="next" name="next" minlength="8" required autocomplete="new-password"></div>
+                    <div class="col-md-4"><label class="form-label" for="confirm">Repeat new password</label>
+                        <input class="form-control" type="password" id="confirm" name="confirm" minlength="8" required autocomplete="new-password"></div>
+                    <div class="col-12"><button class="btn btn-outline-primary">Change password</button></div>
+                </form>
+            </section>
+
+            <section class="panel" id="preferences">
+                <div class="panel-title"><h2>Notifications and appearance</h2></div>
+                <form th:action="@{/settings/preferences}" method="post" class="vstack gap-3">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" role="switch" id="emailNotifications" name="emailNotifications" value="true" th:checked="${me.emailNotifications}">
+                        <label class="form-check-label" for="emailNotifications">Email me when a booking changes, plus reminders and announcements</label>
+                    </div>
+                    <p class="small text-muted mb-0">In-app notifications are always on. Chat messages never send email.</p>
+                    <fieldset>
+                        <legend class="form-label fs-6">Theme</legend>
+                        <div class="d-flex flex-wrap gap-2">
+                            <th:block th:each="t : ${ {'light','dark','system'} }">
+                                <input type="radio" class="btn-check" name="theme" th:id="'theme-' + ${t}" th:value="${t}" th:checked="${me.theme == t}">
+                                <label class="btn btn-outline-secondary" th:for="'theme-' + ${t}" th:text="${t == 'system'} ? 'Match my device' : ${#strings.capitalize(t)}">Light</label>
+                            </th:block>
+                        </div>
+                    </fieldset>
+                    <div><button class="btn btn-primary">Save preferences</button></div>
+                </form>
+            </section>
+
+            <section class="panel" id="availability" th:if="${role == 'FACULTY'}">
+                <div class="panel-title"><h2>Availability</h2></div>
+                <p th:text="${me.onLeave} ? 'You are marked on leave. Lab assistants approve your labs\' equipment requests.' : 'While you are on leave, lab assistants can approve your labs\' equipment requests straight away.'"></p>
+                <form th:action="@{/settings/leave}" method="post">
+                    <input type="hidden" name="onLeave" th:value="${!me.onLeave}">
+                    <button class="btn" th:classappend="${me.onLeave} ? 'btn-success' : 'btn-outline-secondary'" th:text="${me.onLeave} ? 'I\'m back' : 'Mark me on leave'"></button>
+                </form>
+            </section>
+
+            <section class="panel" id="strikes" th:if="${role == 'STUDENT'}">
+                <div class="panel-title"><h2>Strikes</h2></div>
+                <div th:if="${strikes.isEmpty()}" class="empty">No strikes. Return equipment within 24 hours to keep it that way.</div>
+                <table class="table" th:unless="${strikes.isEmpty()}">
+                    <tr th:each="s : ${strikes}"><td th:text="${#temporals.format(s.createdAt, 'd MMM yyyy')}"></td><td th:text="${s.reason}"></td>
+                        <td th:text="${s.waived} ? 'Waived' : (${s.consumed} ? 'Counted in a block' : 'Active')"></td></tr>
+                </table>
+            </section>
+
+            <section class="panel" id="system" th:if="${role == 'SUPER_ADMIN'}">
+                <div class="panel-title"><h2>System rules</h2><span class="text-muted small">Apply to everyone, immediately</span></div>
+                <form th:each="s : ${system}" th:unless="${s.settingKey == 'urgent_flags_per_week'}" th:action="@{/settings/system}" method="post" class="row g-2 align-items-center border-top py-2">
+                    <input type="hidden" name="key" th:value="${s.settingKey}">
+                    <div class="col-md-6">
+                        <label class="fw-semibold" th:for="'s' + ${s.id}" th:text="${#strings.capitalize(#strings.replace(s.settingKey, '_', ' '))}"></label>
+                        <div class="small text-muted" th:switch="${s.settingKey}">
+                            <span th:case="'email_domain'">Signups and Google sign-in must use this domain.</span>
+                            <span th:case="'equipment_lead_days'">How many days ahead equipment and lab rooms can be requested.</span>
+                            <span th:case="'fallback_hours'">Hours before a lab assistant may approve urgent or evaluation requests.</span>
+                            <span th:case="'gd_days_ahead'">How far ahead GD rooms can be booked.</span>
+                            <span th:case="'strike_limit'">Strikes that trigger a booking block.</span>
+                            <span th:case="'strike_block_days'">How long the block lasts, in days.</span>
+                            <span th:case="'leader_succession'">NEXT_MEMBER, or FACULTY_PICKS, when a group leader leaves.</span>
+                        </div>
+                    </div>
+                    <div class="col-md-4"><input class="form-control" th:id="'s' + ${s.id}" name="value" th:value="${s.settingValue}" required></div>
+                    <div class="col-md-2"><button class="btn btn-outline-secondary w-100">Save</button></div>
+                </form>
+            </section>
+        </div>
+    </div>
+</main>
+</body>
+</html>

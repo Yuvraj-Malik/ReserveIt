@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Manage · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Manage</h1><p>People, campus data and the calendars that decide what can be booked.</p></div></div>
+    <h2 class="h5 mb-2">People</h2>
+    <div class="hub mb-4">
+        <a class="hub-card" th:href="@{/admin/users}"><i class="bi bi-people"></i><div><h3>Users</h3>
+            <p>Activate signups, change roles, deactivate leavers. <span class="count" th:text="${userCount} + ' accounts'"></span></p></div></a>
+        <a class="hub-card" th:href="@{/admin/users(status='PENDING_ACTIVATION')}"><i class="bi bi-person-check"></i><div><h3>Waiting for activation</h3>
+            <p><span class="count" th:text="${pendingUsers}">0</span> new accounts to review.</p></div></a>
+        <a class="hub-card" th:href="@{/admin/import}"><i class="bi bi-filetype-csv"></i><div><h3>Import users</h3>
+            <p>Create many accounts at once from a CSV file.</p></div></a>
+        <a class="hub-card" th:href="@{/announcements}"><i class="bi bi-megaphone"></i><div><h3>Announcements</h3>
+            <p>Notify everyone, a role, one person, a group or a society.</p></div></a>
+    </div>
+    <h2 class="h5 mb-2">Campus</h2>
+    <div class="hub mb-4">
+        <a class="hub-card" th:href="@{/admin/campus#departments}"><i class="bi bi-building"></i><div><h3>Departments</h3><p>Add and rename departments.</p></div></a>
+        <a class="hub-card" th:href="@{/admin/campus#labs}"><i class="bi bi-motherboard"></i><div><h3>Labs</h3>
+            <p><span class="count" th:text="${labCount}">0</span> labs and their faculty in-charge.</p></div></a>
+        <a class="hub-card" th:href="@{/admin/campus#rooms}"><i class="bi bi-door-open"></i><div><h3>Rooms</h3>
+            <p><span class="count" th:text="${roomCount}">0</span> rooms: GD, evaluation labs, seminar and society rooms.</p></div></a>
+        <a class="hub-card" th:href="@{/admin/campus#equipment}"><i class="bi bi-cpu"></i><div><h3>Equipment</h3>
+            <p><span class="count" th:text="${itemCount}">0</span> items and their types.</p></div></a>
+        <a class="hub-card" th:href="@{/assistant/maintenance}"><i class="bi bi-tools"></i><div><h3>Maintenance</h3>
+            <p><span class="count" th:text="${maintenanceCount}">0</span> active blocks on items or rooms.</p></div></a>
+    </div>
+    <h2 class="h5 mb-2">Calendars and rules</h2>
+    <div class="hub">
+        <a class="hub-card" th:href="@{/admin/timetable}"><i class="bi bi-table"></i><div><h3>Class timetable</h3><p>Upload the timetable that blocks rooms.</p></div></a>
+        <a class="hub-card" th:href="@{/admin/calendar}"><i class="bi bi-calendar-week"></i><div><h3>Academic calendar</h3>
+            <p>Holidays, working and exam days (<span class="count" th:text="${calendarCount}">0</span> declared).</p></div></a>
+        <a class="hub-card" th:href="@{/settings#system}"><i class="bi bi-sliders"></i><div><h3>System rules</h3><p>Email domain, lead time, strike limits and more.</p></div></a>
+    </div>
+</main>
+</body>
+</html>

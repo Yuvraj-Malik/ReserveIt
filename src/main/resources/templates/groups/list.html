@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Groups · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div><h1>Groups</h1><p>Only the leader books for a group, once per rolling week per equipment type. One group per student per course.</p></div>
+        <a class="btn btn-primary" th:if="${me.role.name() == 'STUDENT' or me.role.name() == 'FACULTY'}" th:href="@{/groups/new}">Create a group</a>
+    </div>
+    <div class="panel">
+        <div th:if="${groups.isEmpty()}" class="empty">No groups yet.</div>
+        <table class="table align-middle" th:unless="${groups.isEmpty()}">
+            <thead><tr><th>Group</th><th>Course</th><th>Leader</th><th>Members</th><th>Status</th></tr></thead>
+            <tr th:each="g : ${groups}">
+                <td><a class="fw-semibold" th:href="@{/groups/{id}(id=${g.id})}" th:text="${g.name}"></a>
+                    <div class="lane-meta" th:if="${g.projectTitle != null}" th:text="${g.projectTitle}"></div></td>
+                <td th:text="${g.courseCode}"></td>
+                <td th:text="${g.leader.fullName}"></td>
+                <td th:text="${g.members.size()}"></td>
+                <td th:text="${g.status.label}"></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

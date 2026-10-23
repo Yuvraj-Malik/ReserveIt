@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Users · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div><h1>Users</h1><p>Activate new signups, assign roles (two GD Room Admins and two Society Room Admins at most), and deactivate leavers. Deactivating cancels live bookings but keeps history.</p></div>
+        <a class="btn btn-outline-primary" th:href="@{/admin/import}">Import from CSV</a>
+    </div>
+    <form class="panel d-flex flex-wrap gap-2 align-items-end mb-3" method="get">
+        <div><label class="form-label" for="status">Status</label>
+            <select class="form-select" id="status" name="status"><option value="">All</option>
+                <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}" th:selected="${status == s}"></option></select></div>
+        <div><label class="form-label" for="role">Role</label>
+            <select class="form-select" id="role" name="role"><option value="">All</option>
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r.label}" th:selected="${role == r}"></option></select></div>
+        <button class="btn btn-outline-secondary">Filter</button>
+    </form>
+    <div class="panel table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Actions</th></tr></thead>
+            <tr th:each="u : ${list}">
+                <td class="fw-semibold" th:text="${u.displayName}"></td>
+                <td th:text="${u.email}"></td>
+                <td>
+                    <form th:action="@{/admin/users/{id}/role(id=${u.id})}" method="post" class="d-flex gap-1" th:unless="${u.role.name() == 'SUPER_ADMIN'}">
+                        <select class="form-select form-select-sm" name="role" aria-label="Role">
+                            <option th:each="r : ${roles}" th:unless="${r.name() == 'SUPER_ADMIN'}" th:value="${r}" th:text="${r.label}" th:selected="${u.role == r}"></option>
+                        </select>
+                        <select class="form-select form-select-sm" name="labId" aria-label="Lab (assistants)">
+                            <option value="">No lab</option>
+                            <option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.code}" th:selected="${u.lab != null and u.lab.id == l.id}"></option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-secondary">Save</button>
+                    </form>
+                    <span th:if="${u.role.name() == 'SUPER_ADMIN'}" th:text="${u.role.label}"></span>
+                </td>
+                <td th:text="${u.status.label}"></td>
+                <td class="text-nowrap">
+                    <form class="d-inline" th:if="${u.status.name() == 'PENDING_ACTIVATION' or u.status.name() == 'DEACTIVATED'}" th:action="@{/admin/users/{id}/activate(id=${u.id})}" method="post">
+                        <button class="btn btn-sm btn-success">Activate</button></form>
+                    <form class="d-inline" th:if="${u.status.name() == 'ACTIVE' and u.id != me.id}" th:action="@{/admin/users/{id}/deactivate(id=${u.id})}" method="post"
+                          data-confirm="Deactivate this account? Their pending and approved bookings will be cancelled.">
+                        <button class="btn btn-sm btn-outline-danger">Deactivate</button></form>
+                    <form class="d-inline" th:action="@{/admin/users/{id}/reset-password(id=${u.id})}" method="post" data-confirm="Reset this user's password?">
+                        <button class="btn btn-sm btn-link">Reset password</button></form>
+                </td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

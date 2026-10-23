@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Strikes · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Strikes</h1><p>Late returns earn strikes; three block booking for 14 days. Waiving a strike that caused a block lifts the block.</p></div></div>
+    <div class="panel">
+        <div th:if="${items.isEmpty()}" class="empty">No strikes.</div>
+        <table class="table align-middle" th:unless="${items.isEmpty()}">
+            <thead><tr><th>Student</th><th>Reason</th><th>When</th><th>State</th><th></th></tr></thead>
+            <tr th:each="s : ${items}">
+                <td class="fw-semibold" th:text="${s.user.displayName}"></td>
+                <td th:text="${s.reason}"></td>
+                <td th:text="${#temporals.format(s.createdAt, 'd MMM yyyy')}"></td>
+                <td th:text="${s.waived} ? 'Waived by ' + ${s.waivedBy.fullName} : (${s.consumed} ? 'Counted in a block' : 'Active')"></td>
+                <td class="text-end"><form th:unless="${s.waived}" th:action="@{/assistant/strikes/{id}/waive(id=${s.id})}" method="post"
+                    data-confirm="Waive this strike?"><button class="btn btn-sm btn-outline-secondary">Waive</button></form></td>
+            </tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

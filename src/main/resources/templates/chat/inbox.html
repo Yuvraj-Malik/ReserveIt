@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Chat · ResrvIt</title></head>
+<body>
+<main>
+    <div class="chat-shell" th:classappend="${c != null} ? 'has-open'">
+        <!-- Left: conversations -->
+        <section class="chat-list" aria-label="Conversations">
+            <div class="chat-list-head vstack gap-2">
+                <input class="form-control chat-search" type="search" placeholder="Search chats" id="chatSearch" aria-label="Search chats">
+                <form th:if="${me.staff}" th:action="@{/chat/direct}" method="post" class="d-flex gap-2">
+                    <select class="form-select form-select-sm" name="userId" aria-label="Start a chat with" required>
+                        <option value="">New chat with a staff member…</option>
+                        <option th:each="u : ${staff}" th:value="${u.id}" th:text="${u.fullName} + ' · ' + ${u.role.label}"></option>
+                    </select>
+                    <button class="btn btn-sm btn-success" title="Start chat" aria-label="Start chat"><i class="bi bi-pencil-square"></i></button>
+                </form>
+                <p th:unless="${me.staff}" class="small text-muted mb-0">
+                    Add a note when you raise a request. The chat with the lab staff or admins opens once it's approved.
+                </p>
+            </div>
+            <ul class="chat-threads" id="threadList">
+                <li th:if="${threads.isEmpty()}" class="notif-empty">No chats yet.</li>
+                <li th:each="t : ${threads}" th:attr="data-search=${#strings.toLowerCase(t.title + ' ' + t.subtitle)}">
+                    <a class="chat-thread" th:href="@{/chat/{id}(id=${t.conversation.id})}" th:classappend="${c != null and c.id == t.conversation.id} ? 'active'">
+                        <span class="avatar" th:if="${t.avatar != null}"><img th:src="${t.avatar}" alt=""></span>
+                        <span class="avatar" th:unless="${t.avatar != null}" th:text="${t.initials}"
+                              th:style="${t.conversation.direct} ? '' : 'background:#2f7d5b'">AB</span>
+                        <span class="meta">
+                            <span class="row1"><span class="name" th:text="${t.title}">Name</span>
+                                <span class="when" th:text="${#temporals.format(t.lastAt, (t.lastAt.toLocalDate() == today ? 'h:mm a' : 'd MMM'))}">10:30</span></span>
+                            <span class="row2"><span class="preview"><i class="bi bi-lock-fill me-1" th:if="${t.locked}" title="Read-only"></i><span th:text="${t.preview}">Hi</span></span>
+                                <span class="unread-pill" th:if="${t.unread > 0}" th:text="${t.unread}">2</span></span>
+                        </span>
+                    </a>
+                </li>
+            </ul>
+        </section>
+
+        <!-- Right: the open conversation -->
+        <section class="chat-pane" aria-label="Conversation">
+            <th:block th:if="${c != null}">
+                <div class="chat-pane-head">
+                    <a class="btn icon-btn d-md-none" th:href="@{/chat}" aria-label="Back to chats"><i class="bi bi-arrow-left"></i></a>
+                    <span class="avatar" th:if="${head.avatar != null}"><img th:src="${head.avatar}" alt=""></span>
+                    <span class="avatar" th:unless="${head.avatar != null}" th:text="${head.initials}" th:style="${c.direct} ? '' : 'background:#2f7d5b'">AB</span>
+                    <div class="flex-grow-1 min-w-0">
+                        <div class="fw-bold text-truncate" th:text="${head.title}">Name</div>
+                        <div class="sub text-truncate" th:text="${head.subtitle}">Role</div>
+                    </div>
+                    <a th:if="${c.booking != null}" class="btn btn-sm btn-outline-secondary" th:href="@{/bookings/{id}(id=${c.booking.id})}">View booking</a>
+                </div>
+                <div class="chat-body" id="thread">
+                    <th:block th:each="m, st : ${messages}"
+                              th:with="prev=${st.index > 0 ? messages[st.index - 1] : null},
+                                       newDay=${prev == null or prev.createdAt.toLocalDate() != m.createdAt.toLocalDate()},
+                                       first=${newDay or prev.sender.id != m.sender.id},
+                                       mine=${m.sender.id == me.id}">
+                        <div class="day-sep" th:if="${newDay}"
+                             th:text="${m.createdAt.toLocalDate() == today} ? 'Today' : ${#temporals.format(m.createdAt, 'EEE d MMM yyyy')}">Today</div>
+                        <div class="bubble" th:classappend="${(mine ? 'out' : 'in') + (first ? ' first' : '')}" th:attr="data-sender=${m.sender.id}">
+                            <span class="who" th:if="${first and !mine}" th:text="${m.sender.fullName} + ' · ' + ${m.sender.role.label}">Name</span><span
+                                class="txt" th:text="${m.plaintext}">Hello</span><span class="t" th:text="${#temporals.format(m.createdAt, 'h:mm a')}">10:30</span>
+                        </div>
+                    </th:block>
+                </div>
+                <form class="chat-compose" id="sendForm" th:if="${lockReason == null}">
+                    <textarea class="form-control" name="text" rows="1" maxlength="2000" placeholder="Type a message" aria-label="Message" required></textarea>
+                    <button class="send-btn" type="submit" aria-label="Send"><i class="bi bi-send-fill"></i></button>
+                </form>
+                <div class="chat-locked" th:unless="${lockReason == null}"><i class="bi bi-lock-fill me-1"></i><span th:text="${lockReason}"></span></div>
+            </th:block>
+            <div class="chat-empty" th:if="${c == null}">
+                <i class="bi bi-chat-dots"></i>
+                <p class="mt-2 mb-0" th:text="${me.staff} ? 'Pick a chat, or start one with a colleague.' : 'Pick a chat. Booking chats open once a request is approved.'"></p>
+            </div>
+        </section>
+    </div>
+
+    <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+        const search = document.getElementById('chatSearch');
+        search.addEventListener('input', () => {
+            const q = search.value.trim().toLowerCase();
+            document.querySelectorAll('#threadList li[data-search]').forEach(li => li.hidden = q && !li.dataset.search.includes(q));
+        });
+
+        const convId = /*[[${c?.id}]]*/ null;
+        if (!convId) {
+            document.addEventListener('resrvit:user-changed', () => location.reload());
+            return;
+        }
+        const myId = /*[[${me.id}]]*/ 0;
+        const thread = document.getElementById('thread');
+        thread.scrollTop = thread.scrollHeight;
+        setTimeout(() => window.ResrvItRefresh && window.ResrvItRefresh(), 300);
+        const seen = new Set();
+
+        function add(m) {
+            if (seen.has(m.id)) return;
+            seen.add(m.id);
+            const mine = m.senderId === myId;
+            const last = thread.querySelector('.bubble:last-of-type');
+            const first = !last || Number(last.dataset.sender) !== m.senderId;
+            const div = document.createElement('div');
+            div.className = 'bubble ' + (mine ? 'out' : 'in') + (first ? ' first' : '');
+            div.dataset.sender = m.senderId;
+            if (first && !mine) {
+                const who = document.createElement('span'); who.className = 'who'; who.textContent = m.sender + ' · ' + m.role; div.append(who);
+            }
+            const body = document.createElement('span'); body.className = 'txt'; body.textContent = m.text;
+            const t = document.createElement('span'); t.className = 't'; t.textContent = m.at;
+            div.append(body, t);
+            thread.appendChild(div);
+            thread.scrollTop = thread.scrollHeight;
+            if (!mine) ResrvIt.post('/chat/' + convId + '/read').then(() => window.ResrvItRefresh && window.ResrvItRefresh());
+        }
+
+        const live = ResrvIt.stomp(client => client.subscribe('/topic/conversation.' + convId, f => add(JSON.parse(f.body))));
+        const form = document.getElementById('sendForm');
+        if (!form) return;
+        const ta = form.text;
+        ta.addEventListener('input', () => { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 140) + 'px'; });
+        ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            const text = ta.value.trim();
+            if (!text) return;
+            ta.value = ''; ta.style.height = 'auto';
+            const res = await ResrvIt.post('/chat/' + convId + '/messages', new URLSearchParams({ text }));
+            if (!res.ok) { alert((await res.json()).error || 'Could not send.'); ta.value = text; return; }
+            if (!live || !live.connected) location.reload();
+        });
+        ta.focus();
+    });
+    </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>My bookings · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div><h1>My bookings</h1><p>Yours and your groups', newest first.</p></div>
+    </div>
+    <div class="panel" th:unless="${offers.isEmpty()}">
+        <div class="panel-title"><h2>Alternatives waiting for your answer</h2></div>
+        <div th:each="o : ${offers}" class="d-flex flex-wrap gap-2 align-items-center py-2 border-top">
+            <a th:href="@{/bookings/{id}(id=${o.booking.id})}" th:text="'#' + ${o.booking.id} + ' ' + ${o.booking.equipmentType.name}"></a>
+            <form th:action="@{/offers/{id}/accept(id=${o.id})}" method="post" class="ms-auto">
+                <button class="btn btn-sm" th:classappend="${o.optionRank == 1} ? 'btn-success' : 'btn-outline-secondary'"
+                        th:text="${#temporals.format(o.offeredDate, 'EEE d MMM')}"></button>
+            </form>
+        </div>
+    </div>
+    <div class="panel">
+        <div th:if="${list.isEmpty()}" class="empty">You haven't made any requests yet. Use <strong>Book</strong> in the menu.</div>
+        <div class="table-responsive" th:unless="${list.isEmpty()}"><table th:replace="~{fragments :: table(${list})}"></table></div>
+    </div>
+</main>
+</body>
+</html>

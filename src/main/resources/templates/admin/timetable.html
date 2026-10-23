@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Timetable · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Class timetable</h1>
+        <p>Timetabled slots block rooms automatically on working and exam days. Uploading replaces the whole timetable; you'll see an impact preview first.</p></div></div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <form class="panel vstack gap-3" th:action="@{/admin/timetable/preview}" method="post" enctype="multipart/form-data">
+                <h2 class="mb-0">Upload a new timetable</h2>
+                <div><label class="form-label" for="file">CSV file</label><input class="form-control" type="file" id="file" name="file" accept=".csv,text/csv" required></div>
+                <button class="btn btn-primary">Preview impact</button>
+            </form>
+            <div class="panel">
+                <h2>Format</h2>
+                <pre class="small mb-0">room_code,day,start,end,course_code,batch
+E-201,MON,09:00,11:00,UEC404,2EC1
+C-305,THU,14:00,16:00,UCS503,3CS2</pre>
+                <p class="small text-muted mt-2 mb-0">Day is MON–SUN or 1–7. Times are 24-hour.</p>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="panel">
+                <h2 th:text="${slots.size()} + ' slots now'"></h2>
+                <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Room</th><th>Day</th><th>Time</th><th>Course</th><th>Batch</th></tr></thead>
+                    <tr th:each="t : ${slots}">
+                        <td th:text="${t.room.code}"></td>
+                        <td th:text="${T(java.time.DayOfWeek).of(t.dayOfWeek).getDisplayName(T(java.time.format.TextStyle).SHORT, T(java.util.Locale).ENGLISH)}"></td>
+                        <td th:text="${#temporals.format(t.startTime, 'HH:mm')} + '–' + ${#temporals.format(t.endTime, 'HH:mm')}"></td>
+                        <td th:text="${t.courseCode}"></td><td th:text="${t.batchLabel}"></td>
+                    </tr>
+                </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

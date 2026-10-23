@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Queue · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Equipment queues</h1>
+            <p>Pending requests per item type and day, first come, first served. Drag (or use the arrows) to reorder; a reason is required and every move is logged. Approved bookings are final.</p>
+        </div>
+        <a class="btn btn-outline-primary" th:href="@{/assistant/emergency}">Emergency booking</a>
+    </div>
+    <div class="alert alert-info d-none" id="liveNote" role="status">The queue changed. <a href="" class="alert-link">Reload</a> to see it.</div>
+
+    <div class="panel" th:if="${queues.isEmpty()}"><div class="empty">No pending equipment requests.</div></div>
+
+    <div class="panel queue" th:each="entry : ${queues}" th:with="first=${entry.value[0]}">
+        <div class="panel-title">
+            <h2 th:text="${first.equipmentType.name} + ' · ' + ${#temporals.format(first.slotDate, 'EEE d MMM')}">Queue</h2>
+            <span class="capacity" th:classappend="${free[entry.key] > 0} ? 'open' : 'full'"
+                  th:text="${free[entry.key] > 0} ? ${free[entry.key]} + ' item(s) free' : 'Full'">2 free</span>
+        </div>
+        <p class="lane-meta mb-2" th:if="${labs.size() > 1}" th:text="${first.lab.name}"></p>
+        <ol class="lane" th:classappend="${entry.value.size() > 1} ? 'sortable'">
+            <li th:each="b, st : ${entry.value}" th:classappend="${st.first} ? 'head'" th:attr="data-id=${b.id}"
+                th:draggable="${entry.value.size() > 1}">
+                <div>
+                    <a class="fw-semibold" th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.forLabel}">Student</a>
+                    <th:block th:replace="~{fragments :: tags(${b})}"></th:block>
+                    <span class="tag tag-wait ms-1" th:if="${hasOffers[b.id]}">Choosing another day</span>
+                    <span class="tag ms-1" th:if="${fallback[b.id]}" title="In-charge on leave, or an urgent/evaluation request waited 2+ hours">You can approve</span>
+                    <div class="lane-meta">
+                        <span th:text="${b.reason != null ? b.reason.label : ''}"></span>
+                        <strong th:if="${daysToEval[b.id] != null}" th:text="' · evaluation in ' + ${daysToEval[b.id]} + ' day' + (${daysToEval[b.id] == 1} ? '' : 's')"></strong>
+                        <span th:text="' · asked ' + ${#temporals.format(b.createdAt, 'd MMM, h:mm a')}"></span>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <th:block th:if="${entry.value.size() > 1}">
+                        <button type="button" class="btn btn-sm btn-light move-up" aria-label="Move up"><i class="bi bi-arrow-up"></i></button>
+                        <button type="button" class="btn btn-sm btn-light move-down" aria-label="Move down"><i class="bi bi-arrow-down"></i></button>
+                    </th:block>
+                    <form th:if="${fallback[b.id] and st.first}" th:action="@{/bookings/{id}/approve(id=${b.id})}" method="post">
+                        <button class="btn btn-sm btn-success">Approve</button></form>
+                    <a class="btn btn-sm btn-outline-secondary" th:href="@{/bookings/{id}(id=${b.id})}">Open</a>
+                </div>
+            </li>
+        </ol>
+        <form class="reorder-form mt-3 d-none">
+            <label class="form-label">Why are you changing the order?</label>
+            <div class="input-group">
+                <input class="form-control" name="reason" required placeholder="For example: evaluation tomorrow">
+                <button class="btn btn-primary" type="submit">Save order</button>
+                <button class="btn btn-outline-secondary" type="button" onclick="location.reload()">Undo</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="panel" th:unless="${freed.isEmpty()}">
+        <div class="panel-title"><h2>Cancelled approved bookings</h2></div>
+        <p class="text-muted">Nothing moves automatically. Open one to give its slot to someone waiting<span th:unless="${waitlisted.isEmpty()}">, such as the requests marked "First in line"</span>.</p>
+        <table class="table">
+            <tr th:each="b : ${freed}"><td><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="'#' + ${b.id}"></a></td>
+                <td th:text="${b.resourceLabel}"></td><td th:text="${b.whenLabel}"></td></tr>
+        </table>
+    </div>
+
+    <script th:inline="javascript">
+    document.addEventListener('DOMContentLoaded', () => {
+        const labIds = /*[[${labs.![id]}]]*/ [];
+        document.querySelectorAll('.panel.queue').forEach(panel => {
+            const lane = panel.querySelector('ol.lane.sortable');
+            const form = panel.querySelector('.reorder-form');
+            if (!lane) return;
+            let dragged = null;
+            const changed = () => {
+                form.classList.remove('d-none');
+                lane.querySelectorAll('li').forEach((li, i) => li.classList.toggle('head', i === 0));
+            };
+            lane.addEventListener('dragstart', e => { dragged = e.target.closest('li'); dragged.classList.add('dragging'); });
+            lane.addEventListener('dragend', () => { if (dragged) dragged.classList.remove('dragging'); dragged = null; });
+            lane.addEventListener('dragover', e => {
+                e.preventDefault();
+                const over = e.target.closest('li');
+                if (!over || over === dragged) return;
+                const r = over.getBoundingClientRect();
+                lane.insertBefore(dragged, (e.clientY - r.top) > r.height / 2 ? over.nextSibling : over);
+                changed();
+            });
+            lane.addEventListener('click', e => {
+                const li = e.target.closest('li');
+                if (e.target.closest('.move-up') && li.previousElementSibling) { lane.insertBefore(li, li.previousElementSibling); changed(); }
+                if (e.target.closest('.move-down') && li.nextElementSibling) { lane.insertBefore(li.nextElementSibling, li); changed(); }
+            });
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                const order = [...lane.querySelectorAll('li')].map(li => Number(li.dataset.id));
+                const res = await ResrvIt.post('/assistant/queue/reorder', { order, reason: form.reason.value }, true);
+                if (res.ok) location.reload();
+                else alert((await res.json()).error || 'Could not save the order.');
+            });
+        });
+        ResrvIt.stomp(client => labIds.forEach(id => client.subscribe('/topic/queue.' + id,
+            () => document.getElementById('liveNote').classList.remove('d-none'))));
+    });
+    </script>
+</main>
+</body>
+</html>

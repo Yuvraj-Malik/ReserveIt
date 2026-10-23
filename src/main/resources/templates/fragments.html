@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<!-- Status dot + label -->
+<span th:fragment="status(b)" th:class="'status status-' + ${b.status.name()}" th:text="${b.status.label}">Pending</span>
+
+<!-- Tags shown next to a booking -->
+<th:block th:fragment="tags(b)">
+    <span class="tag tag-protected ms-1" th:if="${b.protectedEval}" title="Evaluation booking: never moved">Protected</span>
+    <span class="tag tag-urgent ms-1" th:if="${b.urgent}">Urgent</span>
+    <span class="tag tag-critical ms-1" th:if="${b.critical}">Critical</span>
+    <span class="tag tag-wait ms-1" th:if="${b.waitlistPriority}">First in line</span>
+    <span class="tag ms-1" th:if="${b.emergency}">Emergency</span>
+    <span class="tag ms-1" th:if="${b.directBooking}">Direct</span>
+</th:block>
+
+<!-- A table of bookings -->
+<table th:fragment="table(list)" class="table align-middle">
+    <thead>
+    <tr><th>#</th><th>What</th><th>When</th><th>For</th><th>Status</th></tr>
+    </thead>
+    <tbody>
+    <tr th:each="b : ${list}">
+        <td><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.id}">1</a></td>
+        <td><a th:href="@{/bookings/{id}(id=${b.id})}" class="text-reset fw-semibold text-decoration-none" th:text="${b.resourceLabel}">Oscilloscope</a>
+            <th:block th:replace="~{fragments :: tags(${b})}"></th:block></td>
+        <td th:text="${b.whenLabel}">Mon</td>
+        <td th:text="${b.forLabel}">Aarav</td>
+        <td><span th:replace="~{fragments :: status(${b})}"></span></td>
+    </tr>
+    </tbody>
+</table>
+</body>
+</html>

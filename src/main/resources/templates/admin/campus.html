@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Campus · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Departments, labs, rooms and equipment</h1>
+        <p>Edit a row and save it. Use the last row of each list to add a new one.</p></div></div>
+
+    <div class="panel" id="departments">
+        <div class="panel-title"><h2>Departments</h2></div>
+        <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Code</th><th>Name</th><th></th></tr></thead>
+            <tr th:each="d : ${departments}"><td colspan="3">
+                <form th:action="@{/admin/departments}" method="post" class="row g-2">
+                    <input type="hidden" name="id" th:value="${d.id}">
+                    <div class="col-md-2"><input class="form-control form-control-sm" name="code" th:value="${d.code}" required aria-label="Code"></div>
+                    <div class="col-md-8"><input class="form-control form-control-sm" name="name" th:value="${d.name}" required aria-label="Name"></div>
+                    <div class="col-md-2"><button class="btn btn-sm btn-outline-secondary w-100">Save</button></div>
+                </form></td></tr>
+            <tr><td colspan="3">
+                <form th:action="@{/admin/departments}" method="post" class="row g-2">
+                    <div class="col-md-2"><input class="form-control form-control-sm" name="code" placeholder="Code" required aria-label="Code"></div>
+                    <div class="col-md-8"><input class="form-control form-control-sm" name="name" placeholder="New department name" required aria-label="Name"></div>
+                    <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">Add</button></div>
+                </form></td></tr>
+        </table>
+        </div>
+    </div>
+
+    <div class="panel" id="labs">
+        <div class="panel-title"><h2>Labs</h2></div>
+        <p class="text-muted">The faculty in-charge approves the lab's equipment requests.</p>
+        <div th:each="l : ${labs}" class="border-top py-2">
+            <form th:action="@{/admin/labs}" method="post" class="row g-2">
+                <input type="hidden" name="id" th:value="${l.id}">
+                <div class="col-md-2"><input class="form-control form-control-sm" name="code" th:value="${l.code}" required aria-label="Code"></div>
+                <div class="col-md-3"><input class="form-control form-control-sm" name="name" th:value="${l.name}" required aria-label="Name"></div>
+                <div class="col-md-3"><select class="form-select form-select-sm" name="departmentId" aria-label="Department"><option value="">No department</option>
+                    <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.code}" th:selected="${l.department != null and l.department.id == d.id}"></option></select></div>
+                <div class="col-md-3"><select class="form-select form-select-sm" name="inChargeId" aria-label="In-charge"><option value="">No in-charge</option>
+                    <option th:each="f : ${faculty}" th:value="${f.id}" th:text="${f.fullName}" th:selected="${l.inCharge != null and l.inCharge.id == f.id}"></option></select></div>
+                <div class="col-md-1"><button class="btn btn-sm btn-outline-secondary w-100">Save</button></div>
+            </form>
+        </div>
+        <form th:action="@{/admin/labs}" method="post" class="row g-2 border-top pt-2">
+            <div class="col-md-2"><input class="form-control form-control-sm" name="code" placeholder="Code" required aria-label="Code"></div>
+            <div class="col-md-3"><input class="form-control form-control-sm" name="name" placeholder="New lab name" required aria-label="Name"></div>
+            <div class="col-md-3"><select class="form-select form-select-sm" name="departmentId" aria-label="Department"><option value="">No department</option>
+                <option th:each="d : ${departments}" th:value="${d.id}" th:text="${d.code}"></option></select></div>
+            <div class="col-md-3"><select class="form-select form-select-sm" name="inChargeId" aria-label="In-charge"><option value="">No in-charge</option>
+                <option th:each="f : ${faculty}" th:value="${f.id}" th:text="${f.fullName}"></option></select></div>
+            <div class="col-md-1"><button class="btn btn-sm btn-primary w-100">Add</button></div>
+        </form>
+    </div>
+
+    <div class="panel" id="rooms">
+        <div class="panel-title"><h2>Rooms</h2></div>
+        <p class="text-muted">Evaluation labs are approved by their lab's in-charge; seminar rooms by their own in-charge. Permanently assigned rooms are never bookable.</p>
+        <th:block th:each="r : ${rooms}">
+            <form th:action="@{/admin/rooms}" method="post" class="row g-2 border-top py-2">
+                <input type="hidden" name="id" th:value="${r.id}">
+                <div class="col-md-1"><input class="form-control form-control-sm" name="code" th:value="${r.code}" required aria-label="Code"></div>
+                <div class="col-md-3"><input class="form-control form-control-sm" name="name" th:value="${r.name}" required aria-label="Name"></div>
+                <div class="col-md-2"><select class="form-select form-select-sm" name="type" aria-label="Type">
+                    <option th:each="t : ${roomTypes}" th:value="${t}" th:text="${t.label}" th:selected="${r.type == t}"></option></select></div>
+                <div class="col-md-1"><select class="form-select form-select-sm" name="labId" aria-label="Lab"><option value="">No lab</option>
+                    <option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.code}" th:selected="${r.lab != null and r.lab.id == l.id}"></option></select></div>
+                <div class="col-md-2"><select class="form-select form-select-sm" name="inChargeId" aria-label="In-charge"><option value="">No in-charge</option>
+                    <option th:each="f : ${faculty}" th:value="${f.id}" th:text="${f.fullName}" th:selected="${r.inCharge != null and r.inCharge.id == f.id}"></option></select></div>
+                <div class="col-md-1"><input class="form-control form-control-sm" type="number" min="0" name="capacity" th:value="${r.capacity}" aria-label="Capacity"></div>
+                <div class="col-md-1 d-flex align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" name="bookable" value="true" th:checked="${r.bookable}" th:id="'bk' + ${r.id}">
+                    <label class="form-check-label small" th:for="'bk' + ${r.id}">Bookable</label></div></div>
+                <input type="hidden" name="departmentId" th:value="${r.department != null ? r.department.id : ''}">
+                <div class="col-md-1"><button class="btn btn-sm btn-outline-secondary w-100">Save</button></div>
+            </form>
+        </th:block>
+        <form th:action="@{/admin/rooms}" method="post" class="row g-2 border-top pt-2">
+            <div class="col-md-1"><input class="form-control form-control-sm" name="code" placeholder="Code" required aria-label="Code"></div>
+            <div class="col-md-3"><input class="form-control form-control-sm" name="name" placeholder="New room name" required aria-label="Name"></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="type" aria-label="Type"><option th:each="t : ${roomTypes}" th:value="${t}" th:text="${t.label}"></option></select></div>
+            <div class="col-md-1"><select class="form-select form-select-sm" name="labId" aria-label="Lab"><option value="">No lab</option><option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.code}"></option></select></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="inChargeId" aria-label="In-charge"><option value="">No in-charge</option><option th:each="f : ${faculty}" th:value="${f.id}" th:text="${f.fullName}"></option></select></div>
+            <div class="col-md-1"><input class="form-control form-control-sm" type="number" min="0" name="capacity" value="30" aria-label="Capacity"></div>
+            <div class="col-md-1 d-flex align-items-center"><div class="form-check"><input class="form-check-input" type="checkbox" name="bookable" value="true" checked id="bkNew"><label class="form-check-label small" for="bkNew">Bookable</label></div></div>
+            <div class="col-md-1"><button class="btn btn-sm btn-primary w-100">Add</button></div>
+        </form>
+    </div>
+
+    <div class="panel" id="equipment">
+        <div class="panel-title"><h2>Equipment types</h2></div>
+        <p class="text-muted">Items of the same type are interchangeable; weekly limits count per type.</p>
+        <form th:each="t : ${types}" th:action="@{/admin/equipment-types}" method="post" class="row g-2 border-top py-2">
+            <input type="hidden" name="id" th:value="${t.id}">
+            <div class="col-md-4"><input class="form-control form-control-sm" name="name" th:value="${t.name}" required aria-label="Name"></div>
+            <div class="col-md-6"><input class="form-control form-control-sm" name="description" th:value="${t.description}" aria-label="Description"></div>
+            <div class="col-md-2"><button class="btn btn-sm btn-outline-secondary w-100">Save</button></div>
+        </form>
+        <form th:action="@{/admin/equipment-types}" method="post" class="row g-2 border-top pt-2">
+            <div class="col-md-4"><input class="form-control form-control-sm" name="name" placeholder="New type" required aria-label="Name"></div>
+            <div class="col-md-6"><input class="form-control form-control-sm" name="description" placeholder="Description" aria-label="Description"></div>
+            <div class="col-md-2"><button class="btn btn-sm btn-primary w-100">Add</button></div>
+        </form>
+
+        <h2 class="mt-4">Items</h2>
+        <form th:each="e : ${items}" th:action="@{/admin/equipment}" method="post" class="row g-2 border-top py-2">
+            <input type="hidden" name="id" th:value="${e.id}">
+            <div class="col-md-2"><input class="form-control form-control-sm" name="assetTag" th:value="${e.assetTag}" required aria-label="Asset tag"></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="typeId" aria-label="Type"><option th:each="t : ${types}" th:value="${t.id}" th:text="${t.name}" th:selected="${e.type.id == t.id}"></option></select></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="labId" aria-label="Lab"><option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.name}" th:selected="${e.lab.id == l.id}"></option></select></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="status" aria-label="Status"><option th:each="s : ${itemStatuses}" th:value="${s}" th:text="${s.label}" th:selected="${e.status == s}"></option></select></div>
+            <div class="col-md-3"><input class="form-control form-control-sm" name="conditionNote" th:value="${e.conditionNote}" placeholder="Condition" aria-label="Condition"></div>
+            <div class="col-md-1"><button class="btn btn-sm btn-outline-secondary w-100">Save</button></div>
+        </form>
+        <form th:action="@{/admin/equipment}" method="post" class="row g-2 border-top pt-2">
+            <div class="col-md-2"><input class="form-control form-control-sm" name="assetTag" placeholder="Asset tag" required aria-label="Asset tag"></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="typeId" aria-label="Type"><option th:each="t : ${types}" th:value="${t.id}" th:text="${t.name}"></option></select></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="labId" aria-label="Lab"><option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.name}"></option></select></div>
+            <div class="col-md-2"><select class="form-select form-select-sm" name="status" aria-label="Status"><option th:each="s : ${itemStatuses}" th:value="${s}" th:text="${s.label}"></option></select></div>
+            <div class="col-md-3"><input class="form-control form-control-sm" name="conditionNote" placeholder="Condition" aria-label="Condition"></div>
+            <div class="col-md-1"><button class="btn btn-sm btn-primary w-100">Add</button></div>
+        </form>
+    </div>
+</main>
+</body>
+</html>

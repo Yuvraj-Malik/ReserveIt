@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Book a room · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${gd} ? 'Book a GD room' : 'Book a lab or seminar room'">Book a room</h1>
+            <p th:if="${gd}" th:text="'Fixed two-hour slots, up to ' + ${maxDays} + ' days ahead, one slot per day for you or your group. GD Room Admins approve.'"></p>
+            <p th:unless="${gd}">The room's faculty in-charge approves. Times clash-check against classes, maintenance and other bookings.</p>
+        </div>
+    </div>
+    <form th:action="@{/bookings/new/room}" method="post" class="row g-4">
+        <input type="hidden" name="kind" th:value="${gd} ? 'gd' : 'lab'">
+        <div class="col-lg-7">
+            <div class="panel">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="roomId">Room</label>
+                        <select class="form-select" id="roomId" name="roomId" required>
+                            <option value="">Choose…</option>
+                            <option th:each="r : ${rooms}" th:value="${r.id}" th:text="${r.name} + ' (' + ${r.capacity} + ' seats)'">Room</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="date">Date</label>
+                        <input class="form-control" type="date" id="date" name="date" required th:min="${today}" th:max="${today.plusDays(maxDays)}">
+                    </div>
+                    <div class="col-12" th:if="${gd}">
+                        <span class="form-label d-block">Slot</span>
+                        <div class="d-flex flex-wrap gap-2">
+                            <th:block th:each="s, st : ${gdSlots}">
+                                <input type="radio" class="btn-check" name="slot" th:id="'slot' + ${st.index}" th:value="${s[0]} + '-' + ${s[1]}" required>
+                                <label class="btn btn-outline-secondary" th:for="'slot' + ${st.index}"
+                                       th:text="${#temporals.format(s[0], 'h:mm')} + '–' + ${#temporals.format(s[1], 'h:mm a')}">9–11</label>
+                            </th:block>
+                        </div>
+                    </div>
+                    <th:block th:unless="${gd}">
+                        <div class="col-md-6">
+                            <label class="form-label" for="start">From</label>
+                            <input class="form-control" type="time" id="start" name="start" min="08:00" max="20:00" step="900" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label" for="end">To</label>
+                            <input class="form-control" type="time" id="end" name="end" min="08:00" max="20:00" step="900" required>
+                        </div>
+                    </th:block>
+                    <div class="col-12">
+                        <label class="form-label" for="reasonText">Purpose</label>
+                        <input class="form-control" id="reasonText" name="reasonText" maxlength="490" th:required="${!gd}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="note">Note for the approver <span class="text-muted fw-normal">(optional, one message)</span></label>
+                        <textarea class="form-control" id="note" name="note" rows="2" maxlength="500" placeholder="Anything the approver should know"></textarea>
+                        <div class="form-text">You can send one note now. The chat opens for both of you once the request is approved.</div>
+                    </div>
+                    <div class="col-md-6" th:unless="${myGroups.isEmpty()}">
+                        <label class="form-label" for="groupId">Book for</label>
+                        <select class="form-select" id="groupId" name="groupId">
+                            <option value="">Just me</option>
+                            <option th:each="g : ${myGroups}" th:value="${g.id}" th:text="'Group: ' + ${g.name}">Group</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-lg mt-3" type="submit">Send request</button>
+        </div>
+        <div class="col-lg-5">
+            <div class="panel">
+                <h2>Already taken that day</h2>
+                <ul id="busy" class="list-unstyled mb-0"><li class="text-muted">Pick a room and date.</li></ul>
+            </div>
+        </div>
+    </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const room = document.getElementById('roomId'), date = document.getElementById('date'), busy = document.getElementById('busy');
+        async function load() {
+            if (!room.value || !date.value) return;
+            const list = await (await fetch(`/api/rooms/${room.value}/busy?date=${date.value}`)).json();
+            busy.innerHTML = list.length ? list.map(s => `<li class="py-1">${s.label}</li>`).join('') : '<li class="text-success fw-semibold">Free all day.</li>';
+        }
+        room.addEventListener('change', load); date.addEventListener('change', load);
+    });
+    </script>
+</main>
+</body>
+</html>

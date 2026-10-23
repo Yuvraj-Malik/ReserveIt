@@ -1,0 +1,64 @@
+spring:
+  application:
+    name: resrvit
+  datasource:
+    url: jdbc:h2:mem:resrvit;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    open-in-view: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: true
+  thymeleaf:
+    cache: false
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+  mail:
+    host: ${MAIL_HOST:}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true
+
+server:
+  port: ${PORT:8080}
+  error:
+    whitelabel:
+      enabled: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+
+resrvit:
+  # Seed demo departments, rooms, equipment and one user per role (password: password)
+  seed-demo-data: ${RESRVIT_SEED:true}
+  # Base64-encoded 32-byte AES key for chat encryption. Generate with: openssl rand -base64 32
+  chat-key: ${RESRVIT_CHAT_KEY:}
+  mail-from: ${MAIL_FROM:noreply@resrvit.local}
+  base-url: ${RESRVIT_BASE_URL:http://localhost:8080}
+  bootstrap-admin-email: ${ADMIN_EMAIL:}
+  bootstrap-admin-password: ${ADMIN_PASSWORD:}
+  # Google sign-in (only @<email_domain> accounts). Leave empty to hide the Google button.
+  google:
+    client-id: ${GOOGLE_CLIENT_ID:}
+    client-secret: ${GOOGLE_CLIENT_SECRET:}
+
+logging:
+  level:
+    com.resrvit: INFO

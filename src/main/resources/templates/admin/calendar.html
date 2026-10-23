@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Academic calendar · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Academic calendar</h1>
+        <p>Holidays close the labs and switch society rooms to 11 AM–8 PM. Dates not listed are working days on weekdays and holidays at weekends.</p></div></div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <form class="panel vstack gap-3" id="dayForm" th:action="@{/admin/calendar/preview}" method="post">
+                <h2 class="mb-0">Declare one day</h2>
+                <div class="row g-2">
+                    <div class="col-6"><label class="form-label" for="d">Date</label><input class="form-control" type="date" id="d" required></div>
+                    <div class="col-6"><label class="form-label" for="t">Type</label>
+                        <select class="form-select" id="t"><option>HOLIDAY</option><option>WORKING</option><option>EXAM</option></select></div>
+                </div>
+                <div><label class="form-label" for="desc">Description</label><input class="form-control" id="desc" placeholder="Diwali"></div>
+                <input type="hidden" name="csv" id="csv">
+                <button class="btn btn-primary">Preview impact</button>
+            </form>
+            <form class="panel vstack gap-3" th:action="@{/admin/calendar/preview}" method="post" enctype="multipart/form-data">
+                <h2 class="mb-0">Upload a calendar</h2>
+                <div><label class="form-label" for="file">CSV file</label><input class="form-control" type="file" id="file" name="file" accept=".csv,text/csv" required></div>
+                <pre class="small mb-0">date,type,description
+2026-11-09,HOLIDAY,Diwali
+2026-12-01,EXAM,End-semester exams</pre>
+                <button class="btn btn-outline-primary">Preview impact</button>
+            </form>
+        </div>
+        <div class="col-lg-7">
+            <div class="panel">
+                <h2>Declared days</h2>
+                <div th:if="${days.isEmpty()}" class="empty">None yet.</div>
+                <table class="table" th:unless="${days.isEmpty()}">
+                    <tr th:each="d : ${days}" th:classappend="${d.calDate.isBefore(today)} ? 'text-muted'">
+                        <td class="fw-semibold" th:text="${#temporals.format(d.calDate, 'EEE d MMM yyyy')}"></td>
+                        <td th:text="${d.dayType.label}"></td><td th:text="${d.description}"></td></tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.getElementById('dayForm').addEventListener('submit', () => {
+        const desc = document.getElementById('desc').value.replace(/[",\n]/g, ' ');
+        document.getElementById('csv').value = document.getElementById('d').value + ',' + document.getElementById('t').value + ',' + desc;
+    });
+    </script>
+</main>
+</body>
+</html>

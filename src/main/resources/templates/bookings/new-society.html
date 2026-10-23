@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Book a society room · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1 th:text="${previous != null} ? 'Renew a society booking' : 'Book a society room'">Society room</h1>
+            <p>A date range of up to 30 days. The time is fixed: 5:30–9:30 PM on working days, 11 AM–8 PM on holidays. Days when classes use the room are left out.</p>
+        </div>
+    </div>
+    <div class="alert alert-warning" th:if="${societies.isEmpty()}">
+        Only registered office-bearers can request society rooms. Ask a Society Room Admin to add you to your society.
+    </div>
+    <form th:action="@{/bookings/new/society}" method="post" class="row g-4" th:unless="${societies.isEmpty()}">
+        <input type="hidden" name="previousBookingId" th:if="${previous != null}" th:value="${previous.id}">
+        <div class="col-lg-7">
+            <div class="panel">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="societyId">Society</label>
+                        <select class="form-select" id="societyId" name="societyId" required>
+                            <option th:each="s : ${societies}" th:value="${s.id}" th:text="${s.name}"
+                                    th:selected="${previous != null and previous.society.id == s.id}">Society</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="roomId">Room</label>
+                        <select class="form-select" id="roomId" name="roomId" required>
+                            <option th:each="r : ${rooms}" th:value="${r.id}" th:text="${r.name}"
+                                    th:selected="${previous != null and previous.room.id == r.id}">Room</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="from">From</label>
+                        <input class="form-control" type="date" id="from" name="from" required th:min="${today}"
+                               th:value="${previous != null ? previous.endDate.plusDays(1) : ''}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="to">To</label>
+                        <input class="form-control" type="date" id="to" name="to" required th:min="${today}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="reasonText">What it's for</label>
+                        <input class="form-control" id="reasonText" name="reasonText" maxlength="490" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="note">Note for the Society Room Admins <span class="text-muted fw-normal">(optional, one message)</span></label>
+                        <textarea class="form-control" id="note" name="note" rows="2" maxlength="500" placeholder="Anything the admins should know"></textarea>
+                        <div class="form-text">You can send one note now. The chat opens for both of you once the request is approved.</div>
+                    </div>
+
+                </div>
+            </div>
+            <button class="btn btn-primary btn-lg mt-3" type="submit" th:text="${previous != null} ? 'Request renewal' : 'Send request'">Send</button>
+        </div>
+        <div class="col-lg-5">
+            <div class="panel">
+                <h2>Days left out</h2>
+                <div id="excl" class="text-muted">Pick a room and dates.</div>
+            </div>
+            <div class="panel" th:if="${previous != null}">
+                <h2>Booking history</h2>
+                <table class="table">
+                    <tr th:each="h : ${history}"><td th:text="${h.whenLabel}"></td><td th:text="${h.room.name}"></td>
+                        <td><span th:replace="~{fragments :: status(${h})}"></span></td></tr>
+                </table>
+            </div>
+        </div>
+    </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const room = document.getElementById('roomId'), from = document.getElementById('from'), to = document.getElementById('to');
+        const out = document.getElementById('excl');
+        if (!room) return;
+        async function load() {
+            if (!room.value || !from.value || !to.value) return;
+            const r = await (await fetch(`/api/society-exclusions?roomId=${room.value}&from=${from.value}&to=${to.value}`)).json();
+            if (r.days > 30) { out.innerHTML = '<span class="text-danger">That is ' + r.days + ' days; the limit is 30.</span>'; return; }
+            out.innerHTML = (r.excluded.length ? '<p class="mb-1">Not available on:</p><ul>' + r.excluded.map(d => `<li>${d}</li>`).join('') + '</ul>'
+                : '<p class="text-success fw-semibold">Every day in the range is available.</p>')
+                + (r.sampleWindows ? '<p class="small mb-0">Times: ' + r.sampleWindows.join('; ') + '…</p>' : '');
+        }
+        [room, from, to].forEach(x => x.addEventListener('change', load));
+    });
+    </script>
+</main>
+</body>
+</html>

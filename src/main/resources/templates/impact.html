@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Impact preview · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1 th:text="${title}">Impact preview</h1>
+        <p>Nothing has changed yet. Check what happens to existing approved bookings, then confirm.</p></div></div>
+    <div class="panel">
+        <ul class="mb-0"><li th:each="n : ${result.notes}" th:text="${n}"></li></ul>
+    </div>
+    <div class="panel">
+        <div class="panel-title"><h2 th:text="${result.impacts.size()} + ' approved booking(s) affected'">Affected</h2></div>
+        <div th:if="${result.impacts.isEmpty()}" class="empty">No approved bookings are affected.</div>
+        <table class="table align-middle" th:unless="${result.impacts.isEmpty()}">
+            <thead><tr><th>#</th><th>Booking</th><th>For</th><th>Was</th><th>What happens</th></tr></thead>
+            <tr th:each="i : ${result.impacts}">
+                <td><a th:href="@{/bookings/{id}(id=${i.bookingId})}" th:text="${i.bookingId}"></a></td>
+                <td th:text="${i.what}"></td>
+                <td th:text="${i.who}"></td>
+                <td th:text="${i.when}"></td>
+                <td><span class="tag me-1" th:classappend="${i.outcome.name() == 'CRITICAL'} ? 'tag-critical'" th:text="${i.outcome.name() == 'CRITICAL'} ? 'Critical' : 'Replacement'"></span>
+                    <span th:text="${i.detail}"></span></td>
+            </tr>
+        </table>
+    </div>
+    <form th:action="${confirmAction}" method="post" class="d-flex gap-2">
+        <input th:each="h : ${hidden}" type="hidden" th:name="${h.key}" th:value="${h.value}">
+        <button class="btn btn-primary btn-lg">Confirm and apply</button>
+        <a class="btn btn-outline-secondary btn-lg" th:href="${back}">Cancel</a>
+    </form>
+</main>
+</body>
+</html>

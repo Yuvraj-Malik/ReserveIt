@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Import users · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Import users</h1>
+        <p>Imported accounts are active at once and get a temporary password by email.</p></div></div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <form class="panel vstack gap-3" th:action="@{/admin/import}" method="post" enctype="multipart/form-data">
+                <div><label class="form-label" for="file">CSV file</label><input class="form-control" type="file" id="file" name="file" accept=".csv,text/csv" required></div>
+                <button class="btn btn-primary">Import</button>
+            </form>
+            <div class="panel">
+                <h2>Format</h2>
+                <p>One user per line. The header row is optional.</p>
+                <pre class="mb-0 small">email,full_name,role,department_code,roll_no,lab_code
+riya@thapar.edu,Riya Jain,STUDENT,CSED,102303010,
+nk@thapar.edu,Dr. N. Kaur,FACULTY,ECED,,
+lab.mech@thapar.edu,Ravi Teja,LAB_ASSISTANT,MED,,ELAB</pre>
+            </div>
+        </div>
+        <div class="col-lg-7" th:if="${rows != null}">
+            <div class="panel">
+                <h2 th:text="${rows.size()} + ' line(s) processed'"></h2>
+                <table class="table">
+                    <thead><tr><th>Line</th><th>Email</th><th>Result</th><th>Temporary password</th></tr></thead>
+                    <tr th:each="r : ${rows}" th:classappend="${!r.ok} ? 'text-danger'">
+                        <td th:text="${r.line}"></td><td th:text="${r.email}"></td><td th:text="${r.outcome}"></td>
+                        <td><code th:if="${r.tempPassword != null}" th:text="${r.tempPassword}"></code></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>All bookings · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>All bookings</h1><p>Newest first, up to 300.</p></div></div>
+    <form class="panel d-flex flex-wrap gap-2 align-items-end mb-3" method="get">
+        <div><label class="form-label" for="kind">Kind</label><select class="form-select" id="kind" name="kind"><option value="">All</option>
+            <option th:each="k : ${kinds}" th:value="${k}" th:text="${k.label}" th:selected="${kind == k}"></option></select></div>
+        <div><label class="form-label" for="status">Status</label><select class="form-select" id="status" name="status"><option value="">All</option>
+            <option th:each="s : ${statuses}" th:value="${s}" th:text="${s.label}" th:selected="${status == s}"></option></select></div>
+        <button class="btn btn-outline-secondary">Filter</button>
+    </form>
+    <div class="panel table-responsive">
+        <div th:if="${list.isEmpty()}" class="empty">No bookings match.</div>
+        <div th:unless="${list.isEmpty()}"><table th:replace="~{fragments :: table(${list})}"></table></div>
+    </div>
+</main>
+</body>
+</html>

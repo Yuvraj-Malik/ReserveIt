@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Oversee · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Oversee</h1><p>Every queue and record across campus, in one place.</p></div></div>
+    <h2 class="h5 mb-2">Queues</h2>
+    <div class="hub mb-4">
+        <a class="hub-card" th:href="@{/admin/bookings(status='PENDING')}"><i class="bi bi-hourglass-split"></i><div><h3>All pending requests</h3>
+            <p><span class="count" th:text="${pendingAll}">0</span> waiting campus-wide.</p></div></a>
+        <a class="hub-card" th:href="@{/assistant/queue}"><i class="bi bi-list-ol"></i><div><h3>Equipment queues</h3>
+            <p><span class="count" th:text="${eqPending}">0</span> equipment requests, per lab and day.</p></div></a>
+        <a class="hub-card" th:href="@{/faculty/approvals}"><i class="bi bi-check2-square"></i><div><h3>Lab approvals</h3>
+            <p><span class="count" th:text="${labPending}">0</span> equipment and lab-room requests for in-charges.</p></div></a>
+        <a class="hub-card" th:href="@{/gd}"><i class="bi bi-chat-square-text"></i><div><h3>GD queue</h3>
+            <p><span class="count" th:text="${gdPending}">0</span> GD room requests.</p></div></a>
+        <a class="hub-card" th:href="@{/society-admin}"><i class="bi bi-inboxes"></i><div><h3>Society queue</h3>
+            <p><span class="count" th:text="${socPending}">0</span> society room requests and renewals.</p></div></a>
+    </div>
+    <h2 class="h5 mb-2">Records</h2>
+    <div class="hub">
+        <a class="hub-card" th:href="@{/admin/bookings}"><i class="bi bi-journal-text"></i><div><h3>All bookings</h3>
+            <p><span class="count" th:text="${todayCount}">0</span> approved for today.</p></div></a>
+        <a class="hub-card" th:href="@{/admin/critical}"><i class="bi bi-exclamation-octagon"></i><div><h3>Critical bookings</h3>
+            <p><span class="count" th:text="${critical}">0</span> need manual handling.</p></div></a>
+        <a class="hub-card" th:href="@{/society-admin/societies}"><i class="bi bi-flag"></i><div><h3>Societies</h3>
+            <p><span class="count" th:text="${societyCount}">0</span> registered.</p></div></a>
+        <a class="hub-card" th:href="@{/assistant/strikes}"><i class="bi bi-slash-circle"></i><div><h3>Strikes</h3>
+            <p><span class="count" th:text="${strikeCount}">0</span> active strikes.</p></div></a>
+        <a class="hub-card" th:href="@{/assistant/incidents}"><i class="bi bi-exclamation-triangle"></i><div><h3>Damage reports</h3>
+            <p><span class="count" th:text="${incidentCount}">0</span> open.</p></div></a>
+        <a class="hub-card" th:href="@{/admin/audit}"><i class="bi bi-clock-history"></i><div><h3>Audit log</h3><p>Every decision and queue reorder.</p></div></a>
+        <a class="hub-card" th:href="@{/reports}"><i class="bi bi-bar-chart"></i><div><h3>Reports</h3><p>Utilisation, defaulters, response times, society usage.</p></div></a>
+    </div>
+</main>
+</body>
+</html>

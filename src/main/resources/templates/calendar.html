@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Calendar · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Availability calendar</h1><p>Classes, bookings and maintenance for a room, or how many items of a type are free each day.</p></div></div>
+    <div class="panel mb-3">
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label" for="room">Room</label>
+                <select class="form-select" id="room"><option value="">—</option>
+                    <option th:each="r : ${rooms}" th:value="${r.id}" th:text="${r.name}"></option></select>
+            </div>
+            <div class="col-md-1 text-center text-muted pb-2">or</div>
+            <div class="col-md-3">
+                <label class="form-label" for="lab">Lab</label>
+                <select class="form-select" id="lab"><option value="">—</option>
+                    <option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.name}"></option></select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label" for="type">Equipment</label>
+                <select class="form-select" id="type" disabled><option value="">Pick a lab</option></select>
+            </div>
+        </div>
+    </div>
+    <div class="panel"><div id="cal"><p class="text-muted mb-0">Pick a room or equipment.</p></div></div>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const room = document.getElementById('room'), lab = document.getElementById('lab'), type = document.getElementById('type');
+        let cal = null;
+        function show(params, view) {
+            const el = document.getElementById('cal');
+            if (cal) cal.destroy();
+            el.innerHTML = '';
+            cal = new FullCalendar.Calendar(el, {
+                initialView: view, firstDay: 1, height: 'auto', slotMinTime: '08:00:00', slotMaxTime: '22:00:00', nowIndicator: true,
+                headerToolbar: { left: 'prev,next today', center: 'title', right: view === 'dayGridMonth' ? '' : 'timeGridWeek,timeGridDay' },
+                events: { url: '/api/events', extraParams: params }
+            });
+            cal.render();
+        }
+        room.addEventListener('change', () => {
+            if (!room.value) return;
+            lab.value = ''; type.innerHTML = '<option value="">Pick a lab</option>'; type.disabled = true;
+            show({ roomId: room.value }, window.innerWidth < 700 ? 'timeGridDay' : 'timeGridWeek');
+        });
+        lab.addEventListener('change', async () => {
+            room.value = '';
+            type.disabled = true;
+            if (!lab.value) return;
+            const list = await (await fetch('/api/labs/' + lab.value + '/types')).json();
+            type.innerHTML = '<option value="">Choose…</option>' + list.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            type.disabled = false;
+        });
+        type.addEventListener('change', () => { if (type.value) show({ labId: lab.value, typeId: type.value }, 'dayGridMonth'); });
+    });
+    </script>
+</main>
+</body>
+</html>

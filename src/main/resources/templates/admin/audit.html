@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Audit log · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Audit log</h1><p>Recent decisions and every manual queue change.</p></div></div>
+    <div class="panel">
+        <div class="panel-title"><h2>Queue reorders</h2></div>
+        <div th:if="${moves.isEmpty()}" class="empty">No reorders.</div>
+        <table class="table" th:unless="${moves.isEmpty()}">
+            <thead><tr><th>When</th><th>By</th><th>Booking</th><th>Reason</th></tr></thead>
+            <tr th:each="m : ${moves}">
+                <td th:text="${#temporals.format(m.createdAt, 'd MMM, h:mm a')}"></td><td th:text="${m.actor.fullName}"></td>
+                <td><a th:href="@{/bookings/{id}(id=${m.booking.id})}" th:text="'#' + ${m.booking.id} + ' ' + ${m.booking.forLabel}"></a></td>
+                <td th:text="${m.reason}"></td></tr>
+        </table>
+    </div>
+    <div class="panel">
+        <div class="panel-title"><h2>Decisions</h2></div>
+        <table class="table">
+            <thead><tr><th>When</th><th>Action</th><th>By</th><th>Booking</th><th>Note</th></tr></thead>
+            <tr th:each="a : ${decisions}">
+                <td class="text-nowrap" th:text="${#temporals.format(a.createdAt, 'd MMM, h:mm a')}"></td>
+                <td th:text="${a.action.label}"></td>
+                <td th:text="${a.actor != null ? a.actor.fullName : 'System'}"></td>
+                <td><a th:href="@{/bookings/{id}(id=${a.booking.id})}" th:text="'#' + ${a.booking.id}"></a></td>
+                <td th:text="${a.note}"></td></tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

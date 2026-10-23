@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Damage reports · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Damage reports</h1>
+        <p>While a report is open, the student and their group members can't book this lab's equipment.</p></div></div>
+    <div class="panel" th:if="${items.isEmpty()}"><div class="empty">No damage reports.</div></div>
+    <div class="panel" th:each="i : ${items}">
+        <div class="panel-title">
+            <h3 th:text="${i.equipment != null ? i.equipment.assetTag : 'Equipment'} + ' — ' + ${i.lab.name}"></h3>
+            <span class="tag" th:classappend="${i.status.name() == 'OPEN'} ? 'tag-urgent'" th:text="${i.status.label}"></span>
+        </div>
+        <p class="mb-1" th:text="${i.description}"></p>
+        <p class="text-muted small mb-2" th:text="'Reported ' + ${#temporals.format(i.createdAt, 'd MMM yyyy, h:mm a')} + ' by ' + ${i.reportedBy.fullName}
+            + (${i.booking != null} ? ' · booking #' + ${i.booking.id} + ' (' + ${i.booking.forLabel} + ')' : '')"></p>
+        <p class="mb-0" th:if="${i.resolution != null}"><strong>Resolution:</strong> <span th:text="${i.resolution}"></span></p>
+        <form th:if="${i.status.name() == 'OPEN'}" th:action="@{/assistant/incidents/{id}/resolve(id=${i.id})}" method="post" class="input-group mt-2">
+            <input class="form-control" name="resolution" required placeholder="How it was resolved (repaired, fine paid, …)" aria-label="Resolution">
+            <button class="btn btn-success">Resolve</button>
+        </form>
+    </div>
+</main>
+</body>
+</html>

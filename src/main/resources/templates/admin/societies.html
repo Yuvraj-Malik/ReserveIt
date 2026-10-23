@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Societies · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Societies</h1><p>Only office-bearers you register here can request society rooms.</p></div></div>
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <form class="panel vstack gap-3" th:action="@{/society-admin/societies}" method="post">
+                <h2 class="mb-0">Register a society</h2>
+                <div><label class="form-label" for="name">Name</label><input class="form-control" id="name" name="name" required></div>
+                <div><label class="form-label" for="description">Description</label><input class="form-control" id="description" name="description"></div>
+                <button class="btn btn-primary">Register</button>
+            </form>
+        </div>
+        <div class="col-lg-8">
+            <div class="panel" th:each="s : ${societies}">
+                <div class="panel-title">
+                    <h3 th:text="${s.name}">Society</h3>
+                    <form th:action="@{/society-admin/societies/{id}/active(id=${s.id})}" method="post">
+                        <input type="hidden" name="active" th:value="${!s.active}">
+                        <button class="btn btn-sm btn-link" th:text="${s.active} ? 'Deactivate' : 'Reactivate'"></button>
+                    </form>
+                </div>
+                <p class="text-muted" th:if="${s.description != null}" th:text="${s.description}"></p>
+                <table class="table align-middle">
+                    <tr th:each="ob : ${bearers}" th:if="${ob.society.id == s.id}">
+                        <td class="fw-semibold" th:text="${ob.user.fullName}"></td><td th:text="${ob.position}"></td><td th:text="${ob.user.email}"></td>
+                        <td class="text-end"><form th:action="@{/society-admin/bearers/{id}/remove(id=${ob.id})}" method="post"><button class="btn btn-sm btn-link text-danger">Remove</button></form></td>
+                    </tr>
+                </table>
+                <form th:action="@{/society-admin/societies/{id}/bearers(id=${s.id})}" method="post" class="row g-2 mt-1">
+                    <div class="col-md-6"><input class="form-control" name="email" type="email" placeholder="Student or faculty email" required aria-label="Email"></div>
+                    <div class="col-md-3"><input class="form-control" name="position" placeholder="Position" required aria-label="Position"></div>
+                    <div class="col-md-3"><button class="btn btn-outline-primary w-100">Add office-bearer</button></div>
+                </form>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Society queue · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Society room queue</h1>
+        <p>Shared by both Society Room Admins. Claim a request to lock it to you. Days blocked by classes are shown on each request, and renewals show the society's history.</p></div></div>
+    <div class="panel">
+        <div class="panel-title"><h2>Waiting</h2></div>
+        <div th:if="${pending.isEmpty()}" class="empty">Nothing waiting.</div>
+        <ol class="lane" th:unless="${pending.isEmpty()}">
+            <li th:each="b : ${pending}">
+                <div>
+                    <a class="fw-semibold" th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.society.name} + ' · ' + ${b.room.name} + ', ' + ${b.whenLabel}"></a>
+                    <div class="lane-meta" th:text="${b.forLabel} + (${b.reasonText != null} ? ' · ' + ${b.reasonText} : '')"></div>
+                    <div class="lane-meta" th:if="${!b.excludedDateList.isEmpty()}" th:text="${b.excludedDateList.size()} + ' day(s) left out because of classes or maintenance'"></div>
+                    <div class="lane-meta" th:if="${b.previousBooking != null}">Renewal of <a th:href="@{/bookings/{id}(id=${b.previousBooking.id})}" th:text="'#' + ${b.previousBooking.id}"></a></div>
+                    <div class="lane-meta" th:if="${b.claimedBy != null}" th:text="'Claimed by ' + ${b.claimedBy.fullName}"></div>
+                </div>
+                <div class="d-flex gap-2 flex-wrap justify-content-end">
+                    <form th:if="${b.claimedBy == null}" th:action="@{/bookings/{id}/claim(id=${b.id})}" method="post"><button class="btn btn-sm btn-outline-secondary">Claim</button></form>
+                    <th:block th:if="${b.claimedBy != null and b.claimedBy.id == me.id}">
+                        <form th:action="@{/bookings/{id}/approve(id=${b.id})}" method="post"><button class="btn btn-sm btn-success">Approve</button></form>
+                        <a class="btn btn-sm btn-outline-secondary" th:href="@{/bookings/{id}(id=${b.id})}">Reject…</a>
+                        <form th:action="@{/bookings/{id}/release(id=${b.id})}" method="post"><button class="btn btn-sm btn-link">Release</button></form>
+                    </th:block>
+                </div>
+            </li>
+        </ol>
+    </div>
+    <div class="panel" th:unless="${freed.isEmpty()}">
+        <div class="panel-title"><h2>Cancelled slots to reassign</h2></div>
+        <table class="table"><tr th:each="b : ${freed}"><td><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.society.name} + ' · ' + ${b.room.name} + ', ' + ${b.whenLabel}"></a></td><td th:text="${b.forLabel}"></td></tr></table>
+    </div>
+    <div class="panel">
+        <div class="panel-title"><h2>Active bookings</h2></div>
+        <div th:if="${active.isEmpty()}" class="empty">None.</div>
+        <div th:unless="${active.isEmpty()}"><table th:replace="~{fragments :: table(${active})}"></table></div>
+    </div>
+</main>
+</body>
+</html>

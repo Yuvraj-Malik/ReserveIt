@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Emergency booking · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Emergency booking</h1>
+        <p>Book an item for a student right away, overriding the weekly limit if needed. A reason is required; it's logged and the faculty in-charge is told.</p></div></div>
+    <form class="panel vstack gap-3" style="max-width:640px" th:action="@{/assistant/emergency}" method="post">
+        <div><label class="form-label" for="studentId">Student</label>
+            <select class="form-select" id="studentId" name="studentId" required>
+                <option value="">Choose…</option>
+                <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.displayName}"></option>
+            </select></div>
+        <div><label class="form-label" for="typeId">Equipment</label>
+            <select class="form-select" id="typeId" name="typeId" required>
+                <option th:each="t : ${types}" th:value="${t.id}" th:text="${t.name}"></option>
+            </select></div>
+        <div><label class="form-label" for="date">Day</label><input class="form-control" type="date" id="date" name="date" required th:min="${today}" th:value="${today}"></div>
+        <div><label class="form-label" for="reason">Reason</label><input class="form-control" id="reason" name="reason" required></div>
+        <button class="btn btn-primary">Book and approve</button>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Home · ResrvIt</title></head>
+<body>
+<main th:with="role=${me.role.name()}">
+    <div class="page-head">
+        <div>
+            <h1 th:text="'Hello, ' + ${me.fullName}">Hello</h1>
+            <p th:text="${#temporals.format(today, 'EEEE d MMMM yyyy')} + (${isHoliday} ? ' · Holiday: labs are closed' : '')">Today</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap" th:if="${role == 'STUDENT' or role == 'FACULTY'}">
+            <a class="btn btn-primary" th:href="@{/bookings/new/equipment}"><i class="bi bi-cpu me-1"></i>Book equipment</a>
+            <a class="btn btn-outline-primary" th:href="@{/bookings/new/room(kind='gd')}">Book a GD room</a>
+        </div>
+        <a class="btn btn-outline-primary" th:if="${me.announcer}" th:href="@{/announcements}"><i class="bi bi-megaphone me-1"></i>Send announcement</a>
+    </div>
+
+    <!-- ================================================================ STUDENT -->
+    <th:block th:if="${role == 'STUDENT'}">
+        <div class="panel" th:if="${!offers.isEmpty()}">
+            <div class="panel-title"><h2>Your slot was full: pick a new day</h2></div>
+            <p class="text-muted">Accept within 24 hours, or the first option is kept for you.</p>
+            <div th:each="o : ${offers}" class="d-flex flex-wrap align-items-center gap-2 py-2 border-top">
+                <span class="fw-semibold" th:text="${o.booking.equipmentType.name} + ' · ' + ${o.booking.lab.name}">Osc</span>
+                <span class="text-muted" th:text="'instead of ' + ${#temporals.format(o.booking.slotDate, 'EEE d MMM')}">instead of</span>
+                <form th:action="@{/offers/{id}/accept(id=${o.id})}" method="post" class="ms-auto">
+                    <button class="btn btn-sm" th:classappend="${o.optionRank == 1} ? 'btn-success' : 'btn-outline-secondary'"
+                            th:text="${#temporals.format(o.offeredDate, 'EEE d MMM')} + (${o.optionRank == 1} ? ' (held for you)' : '')">Take</button>
+                </form>
+            </div>
+        </div>
+        <div class="panel" th:if="${!groupInvites.isEmpty()}">
+            <div class="panel-title"><h2>Group invitations</h2></div>
+            <div th:each="g : ${groupInvites}" class="d-flex align-items-center gap-2 py-2 border-top">
+                <a th:href="@{/groups/{id}(id=${g.id})}" class="fw-semibold" th:text="${g.name} + ' (' + ${g.courseCode} + ')'">Team</a>
+                <span class="text-muted" th:text="'from ' + ${g.leader.fullName}"></span>
+                <form th:action="@{/groups/{id}/confirm(id=${g.id})}" method="post" class="ms-auto"><button class="btn btn-sm btn-success">Confirm</button></form>
+                <form th:action="@{/groups/{id}/decline(id=${g.id})}" method="post"><button class="btn btn-sm btn-outline-secondary">Decline</button></form>
+            </div>
+        </div>
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/bookings}"><div class="n" th:text="${upcoming.size()}">0</div><div class="l">live bookings</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/chat}"><div class="n" th:text="${openChats.size()}">0</div><div class="l">open booking chats</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/groups}"><div class="n" th:text="${myGroups.size()}">0</div><div class="l">groups</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:classappend="${activeStrikes > 0} ? 'alert-tile'" th:href="@{/settings#strikes}"><div class="n" th:text="${activeStrikes}">0</div><div class="l">strikes on record</div></a></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="panel h-100">
+                    <div class="panel-title"><h2>Coming up</h2><a th:href="@{/bookings}">All bookings</a></div>
+                    <div th:if="${upcoming.isEmpty()}" class="empty">Nothing booked. Equipment can be requested up to a week ahead.</div>
+                    <div th:unless="${upcoming.isEmpty()}" class="table-responsive"><table th:replace="~{fragments :: table(${upcoming})}"></table></div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="panel h-100">
+                    <div class="panel-title"><h2>Upcoming evaluations</h2></div>
+                    <div th:if="${evaluations.isEmpty()}" class="empty">None announced.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${evaluations.isEmpty()}">
+                        <li th:each="e : ${evaluations}"><strong th:text="${#temporals.format(e.evalDate, 'EEE d MMM')}"></strong>
+                            <div class="small" th:text="${e.courseCode} + ' ' + ${e.title} + ' · ' + ${e.lab.name}"></div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- ================================================================ FACULTY -->
+    <th:block th:if="${role == 'FACULTY'}">
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3"><a class="stat" th:classappend="${!pending.isEmpty()} ? 'alert-tile'" th:href="@{/faculty/approvals}">
+                <div class="n" th:text="${pending.size()}">0</div><div class="l">requests waiting for you</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/groups}"><div class="n" th:text="${groupsWaiting.size()}">0</div><div class="l">groups to approve</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/faculty/evaluations}"><div class="n" th:text="${myEvaluations.size()}">0</div><div class="l">upcoming evaluations</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/settings#availability}">
+                <div class="n" th:text="${me.onLeave} ? 'On leave' : 'Available'">Available</div>
+                <div class="l" th:text="${me.onLeave} ? 'Assistants approve for you' : 'You approve your labs'"></div></a></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-7">
+                <div class="panel">
+                    <div class="panel-title"><h2>Waiting for your decision</h2><a th:href="@{/faculty/approvals}">Open approvals</a></div>
+                    <div th:if="${pending.isEmpty()}" class="empty">Nothing waiting.</div>
+                    <table class="table mini-table align-middle" th:unless="${pending.isEmpty()}">
+                        <tr th:each="b : ${pending}" th:if="${pending.indexOf(b) < 8}">
+                            <td><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.forLabel}"></a>
+                                <th:block th:replace="~{fragments :: tags(${b})}"></th:block></td>
+                            <td th:text="${b.resourceLabel}"></td><td class="text-nowrap" th:text="${b.whenLabel}"></td></tr>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Your labs today</h2></div>
+                    <div th:if="${stock.isEmpty()}" class="empty">You aren't the in-charge of a lab.</div>
+                    <table class="table mini-table" th:unless="${stock.isEmpty()}">
+                        <thead><tr><th>Equipment</th><th>Free today</th><th>Waiting</th></tr></thead>
+                        <tr th:each="s : ${stock}">
+                            <td th:text="${s.type} + ' · ' + ${s.lab}"></td>
+                            <td><span th:text="${s.free} + ' of ' + ${s.capacity}"></span>
+                                <div class="bar"><span th:style="'width:' + (${s.capacity} == 0 ? 100 : ${s.free * 100 / s.capacity}) + '%'"
+                                                      th:classappend="${s.capacity == 0 or s.free == 0} ? 'none' : (${s.free * 2 < s.capacity} ? 'low' : '')"></span></div></td>
+                            <td th:text="${s.waiting}"></td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="col-lg-5">
+                <div class="panel">
+                    <div class="panel-title"><h2>Out on loan from your labs</h2></div>
+                    <div th:if="${out.isEmpty()}" class="empty">Nothing is out.</div>
+                    <table class="table mini-table" th:unless="${out.isEmpty()}">
+                        <tr th:each="c : ${out}"><td th:text="${c.equipment.assetTag}"></td><td th:text="${c.booking.forLabel}"></td>
+                            <td th:classappend="${c.dueAt.isBefore(#temporals.createNow())} ? 'text-danger fw-semibold'" th:text="'due ' + ${#temporals.format(c.dueAt, 'EEE h:mm a')}"></td></tr>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Your rooms today</h2></div>
+                    <div th:if="${roomsToday.isEmpty()}" class="empty">No bookings in your rooms today.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${roomsToday.isEmpty()}">
+                        <li th:each="b : ${roomsToday}"><strong th:text="${#temporals.format(b.startTime, 'h:mm a')} + '–' + ${#temporals.format(b.endTime, 'h:mm a')}"></strong>
+                            · <span th:text="${b.room.name} + ' · ' + ${b.forLabel}"></span></li>
+                    </ul>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Your evaluations</h2><a th:href="@{/faculty/evaluations}">Manage</a></div>
+                    <div th:if="${myEvaluations.isEmpty()}" class="empty">None upcoming.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${myEvaluations.isEmpty()}">
+                        <li th:each="e : ${myEvaluations}"><strong th:text="${#temporals.format(e.evalDate, 'EEE d MMM')}"></strong>
+                            · <span th:text="${e.courseCode} + ' ' + ${e.title}"></span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="panel mt-3" th:unless="${upcoming.isEmpty()}">
+            <div class="panel-title"><h2>Your own bookings</h2></div>
+            <div class="table-responsive"><table th:replace="~{fragments :: table(${upcoming})}"></table></div>
+        </div>
+    </th:block>
+
+    <!-- ================================================================ LAB ASSISTANT -->
+    <th:block th:if="${role == 'LAB_ASSISTANT'}">
+        <div class="alert alert-warning" th:if="${lab == null}">You aren't assigned to a lab yet. Ask the super admin.</div>
+        <th:block th:if="${lab != null}">
+            <div class="row g-3 mb-3">
+                <div class="col-6 col-md"><a class="stat" th:href="@{/assistant/scan}"><div class="n" th:text="${pickups.size()}">0</div><div class="l">pick-ups today</div></a></div>
+                <div class="col-6 col-md"><a class="stat" th:href="@{/assistant/queue}"><div class="n" th:text="${pendingCount}">0</div><div class="l">waiting in queues</div></a></div>
+                <div class="col-6 col-md"><a class="stat" th:classappend="${!fallback.isEmpty()} ? 'alert-tile'" th:href="@{/assistant/queue}"><div class="n" th:text="${fallback.size()}">0</div><div class="l">you can approve</div></a></div>
+                <div class="col-6 col-md"><a class="stat" th:classappend="${overdue > 0} ? 'alert-tile'" th:href="@{/assistant/scan}"><div class="n" th:text="${overdue}">0</div><div class="l">overdue returns</div></a></div>
+                <div class="col-6 col-md"><a class="stat" th:classappend="${!openIncidents.isEmpty()} ? 'alert-tile'" th:href="@{/assistant/incidents}"><div class="n" th:text="${openIncidents.size()}">0</div><div class="l">open damage reports</div></a></div>
+            </div>
+            <div class="row g-3">
+                <div class="col-lg-7">
+                    <div class="panel">
+                        <div class="panel-title"><h2 th:text="${lab.name} + ' today'">Lab today</h2></div>
+                        <table class="table mini-table">
+                            <thead><tr><th>Equipment</th><th>Free</th><th>Waiting</th></tr></thead>
+                            <tr th:each="s : ${stock}">
+                                <td th:text="${s.type}"></td>
+                                <td style="min-width:140px"><span th:text="${s.free} + ' of ' + ${s.capacity}"></span>
+                                    <div class="bar"><span th:style="'width:' + (${s.capacity} == 0 ? 100 : ${s.free * 100 / s.capacity}) + '%'"
+                                                          th:classappend="${s.capacity == 0 or s.free == 0} ? 'none' : (${s.free * 2 < s.capacity} ? 'low' : '')"></span></div></td>
+                                <td th:text="${s.waiting}"></td></tr>
+                        </table>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-title"><h2>Collecting today</h2><a th:href="@{/assistant/scan}">Scan</a></div>
+                        <div th:if="${pickups.isEmpty()}" class="empty">No pick-ups today.</div>
+                        <table class="table mini-table" th:unless="${pickups.isEmpty()}">
+                            <tr th:each="b : ${pickups}"><td class="fw-semibold" th:text="${b.forLabel}"></td>
+                                <td th:text="${b.equipmentType.name} + ' · ' + ${b.equipment != null ? b.equipment.assetTag : '-'}"></td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="col-lg-5">
+                    <div class="panel">
+                        <div class="panel-title"><h2>Out on loan</h2></div>
+                        <div th:if="${out.isEmpty()}" class="empty">Nothing is out.</div>
+                        <table class="table mini-table" th:unless="${out.isEmpty()}">
+                            <tr th:each="c : ${out}"><td th:text="${c.equipment.assetTag}"></td><td th:text="${c.booking.forLabel}"></td>
+                                <td th:classappend="${c.dueAt.isBefore(#temporals.createNow())} ? 'text-danger fw-semibold'" th:text="'due ' + ${#temporals.format(c.dueAt, 'EEE h:mm a')}"></td></tr>
+                        </table>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-title"><h2>Recent chats</h2><a th:href="@{/chat}">All chats</a></div>
+                        <div th:if="${chats.isEmpty()}" class="empty">No chats yet.</div>
+                        <ul class="list-unstyled feed mb-0" th:unless="${chats.isEmpty()}">
+                            <li th:each="t : ${chats}"><a th:href="@{/chat/{id}(id=${t.conversation.id})}" th:text="${t.title}"></a>
+                                <span class="unread-pill ms-1" style="background:var(--moss);color:#fff;border-radius:99px;padding:0 6px;font-size:.75rem" th:if="${t.unread > 0}" th:text="${t.unread}"></span>
+                                <div class="small text-muted text-truncate" th:text="${t.preview}"></div></li>
+                        </ul>
+                    </div>
+                    <div class="panel" th:unless="${maintenanceNow.isEmpty() and evaluations.isEmpty()}">
+                        <div class="panel-title"><h2>Coming up</h2></div>
+                        <ul class="list-unstyled feed mb-0">
+                            <li th:each="m : ${maintenanceNow}"><i class="bi bi-tools me-1"></i><span th:text="${m.targetLabel} + ' in maintenance until ' + ${#temporals.format(m.endDate, 'd MMM')}"></span></li>
+                            <li th:each="e : ${evaluations}"><i class="bi bi-calendar-event me-1"></i><span th:text="${#temporals.format(e.evalDate, 'EEE d MMM')} + ' · ' + ${e.courseCode} + ' ' + ${e.title}"></span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </th:block>
+    </th:block>
+
+    <!-- ================================================================ GD ADMIN -->
+    <th:block th:if="${role == 'GD_ADMIN'}">
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3"><a class="stat" th:classappend="${!pending.isEmpty()} ? 'alert-tile'" th:href="@{/gd}"><div class="n" th:text="${pending.size()}">0</div><div class="l">requests waiting</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/gd}"><div class="n" th:text="${unclaimed}">0</div><div class="l">not yet claimed</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/gd}"><div class="n" th:text="${claimedByMe}">0</div><div class="l">claimed by you</div></a></div>
+            <div class="col-6 col-md-3"><a class="stat" th:href="@{/gd}"><div class="n" th:text="${weekApproved}">0</div><div class="l">approved this week</div></a></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="panel">
+                    <div class="panel-title"><h2>GD rooms today</h2></div>
+                    <div class="table-responsive"><table class="gd-grid">
+                        <thead><tr><th>Room</th><th>9–11</th><th>11–1</th><th>2–4</th><th>4–6</th></tr></thead>
+                        <tr th:each="r : ${gdToday}"><th th:text="${r.room.name}"></th>
+                            <td th:each="cell : ${r.cells}" class="cell" th:classappend="${cell.state}">
+                                <a th:if="${cell.bookingId != null}" class="text-reset" th:href="@{/bookings/{id}(id=${cell.bookingId})}" th:text="${cell.label}"></a>
+                                <span th:unless="${cell.bookingId != null}" th:text="${cell.label}"></span></td></tr>
+                    </table></div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2 th:text="'Tomorrow · ' + ${#temporals.format(tomorrow, 'EEE d MMM')}">Tomorrow</h2></div>
+                    <div class="table-responsive"><table class="gd-grid">
+                        <thead><tr><th>Room</th><th>9–11</th><th>11–1</th><th>2–4</th><th>4–6</th></tr></thead>
+                        <tr th:each="r : ${gdTomorrow}"><th th:text="${r.room.name}"></th>
+                            <td th:each="cell : ${r.cells}" class="cell" th:classappend="${cell.state}">
+                                <a th:if="${cell.bookingId != null}" class="text-reset" th:href="@{/bookings/{id}(id=${cell.bookingId})}" th:text="${cell.label}"></a>
+                                <span th:unless="${cell.bookingId != null}" th:text="${cell.label}"></span></td></tr>
+                    </table></div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="panel">
+                    <div class="panel-title"><h2>Next in the queue</h2><a th:href="@{/gd}">Open queue</a></div>
+                    <div th:if="${pending.isEmpty()}" class="empty">Nothing waiting.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${pending.isEmpty()}">
+                        <li th:each="b : ${pending}" th:if="${pending.indexOf(b) < 6}"><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.forLabel}"></a>
+                            <div class="small text-muted" th:text="${b.room.name} + ', ' + ${b.whenLabel} + (${b.claimedBy != null} ? ' · claimed by ' + ${b.claimedBy.fullName} : '')"></div></li>
+                    </ul>
+                </div>
+                <div class="panel" th:unless="${freed.isEmpty()}">
+                    <div class="panel-title"><h2>Cancelled slots to reassign</h2></div>
+                    <ul class="list-unstyled feed mb-0"><li th:each="b : ${freed}"><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.room.name} + ', ' + ${b.whenLabel}"></a></li></ul>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Recent chats</h2><a th:href="@{/chat}">All chats</a></div>
+                    <div th:if="${chats.isEmpty()}" class="empty">No chats yet.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${chats.isEmpty()}">
+                        <li th:each="t : ${chats}"><a th:href="@{/chat/{id}(id=${t.conversation.id})}" th:text="${t.title}"></a>
+                            <div class="small text-muted text-truncate" th:text="${t.preview}"></div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- ================================================================ SOCIETY ADMIN -->
+    <th:block th:if="${role == 'SOCIETY_ADMIN'}">
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md"><a class="stat" th:classappend="${!pending.isEmpty()} ? 'alert-tile'" th:href="@{/society-admin}"><div class="n" th:text="${pending.size()}">0</div><div class="l">requests waiting</div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:href="@{/society-admin}"><div class="n" th:text="${renewals}">0</div><div class="l">renewals waiting</div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:href="@{/society-admin}"><div class="n" th:text="${active.size()}">0</div><div class="l">active bookings</div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:href="@{/society-admin}"><div class="n" th:text="${ending.size()}">0</div><div class="l">ending within a week</div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:href="@{/society-admin/societies}"><div class="n" th:text="${societyCount}">0</div><div class="l" th:text="'societies · ' + ${bearerCount} + ' office-bearers'"></div></a></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-6">
+                <div class="panel">
+                    <div class="panel-title"><h2>Tonight</h2>
+                        <span class="text-muted" th:text="${#temporals.format(window.start, 'h:mm a')} + ' – ' + ${#temporals.format(window.end, 'h:mm a')}"></span></div>
+                    <table class="table mini-table">
+                        <tr th:each="r : ${socRooms}"><th th:text="${r.name}"></th>
+                            <td th:with="b=${tonight.?[room.id == __${r.id}__]}">
+                                <span th:if="${b.isEmpty()}" class="cell free px-2 py-1 rounded">Free</span>
+                                <a th:unless="${b.isEmpty()}" th:href="@{/bookings/{id}(id=${b[0].id})}" th:text="${b[0].society.name}"></a></td></tr>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Waiting for a decision</h2><a th:href="@{/society-admin}">Open queue</a></div>
+                    <div th:if="${pending.isEmpty()}" class="empty">Nothing waiting.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${pending.isEmpty()}">
+                        <li th:each="b : ${pending}"><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.society.name}"></a>
+                            <span class="tag tag-wait ms-1" th:if="${b.previousBooking != null}">Renewal</span>
+                            <div class="small text-muted" th:text="${b.room.name} + ', ' + ${b.whenLabel}"></div></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="panel">
+                    <div class="panel-title"><h2>Active bookings</h2></div>
+                    <div th:if="${active.isEmpty()}" class="empty">No active society bookings.</div>
+                    <table class="table mini-table" th:unless="${active.isEmpty()}">
+                        <thead><tr><th>Society</th><th>Room</th><th>Ends</th></tr></thead>
+                        <tr th:each="b : ${active}"><td><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.society.name}"></a></td>
+                            <td th:text="${b.room.name}"></td>
+                            <td th:classappend="${!b.endDate.isAfter(today.plusDays(5))} ? 'text-danger fw-semibold'" th:text="${#temporals.format(b.endDate, 'EEE d MMM')}"></td></tr>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Recent chats</h2><a th:href="@{/chat}">All chats</a></div>
+                    <div th:if="${chats.isEmpty()}" class="empty">No chats yet.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${chats.isEmpty()}">
+                        <li th:each="t : ${chats}"><a th:href="@{/chat/{id}(id=${t.conversation.id})}" th:text="${t.title}"></a>
+                            <div class="small text-muted text-truncate" th:text="${t.preview}"></div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </th:block>
+
+    <!-- ================================================================ SUPER ADMIN -->
+    <th:block th:if="${role == 'SUPER_ADMIN'}">
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md"><a class="stat" th:classappend="${!awaiting.isEmpty()} ? 'alert-tile'" th:href="@{/admin/users(status='PENDING_ACTIVATION')}"><div class="n" th:text="${awaiting.size()}">0</div><div class="l">accounts to activate</div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:href="@{/admin/bookings(status='PENDING')}"><div class="n" th:text="${pendingAll}">0</div><div class="l">pending requests</div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:href="@{/admin/bookings}"><div class="n" th:text="${todayCount}">0</div><div class="l">approved for today</div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:classappend="${!overdue.isEmpty()} ? 'alert-tile'" th:href="@{/assistant/queue}"><div class="n" th:text="${outNow}">0</div><div class="l" th:text="'out on loan · ' + ${overdue.size()} + ' overdue'"></div></a></div>
+            <div class="col-6 col-md"><a class="stat" th:classappend="${!critical.isEmpty()} ? 'alert-tile'" th:href="@{/admin/critical}"><div class="n" th:text="${critical.size()}">0</div><div class="l">critical bookings</div></a></div>
+        </div>
+        <div class="row g-3">
+            <div class="col-lg-8">
+                <div class="panel" th:unless="${awaiting.isEmpty()}">
+                    <div class="panel-title"><h2>Waiting for activation</h2><a th:href="@{/admin/users(status='PENDING_ACTIVATION')}">All</a></div>
+                    <table class="table mini-table align-middle">
+                        <tr th:each="u : ${awaiting}">
+                            <td class="fw-semibold" th:text="${u.fullName}"></td><td th:text="${u.email}"></td><td th:text="${u.role.label}"></td>
+                            <td class="text-end"><form th:action="@{/admin/users/{id}/activate(id=${u.id})}" method="post"><button class="btn btn-sm btn-success">Activate</button></form></td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Pending by kind</h2><a th:href="@{/admin/oversee}">Oversee</a></div>
+                    <div class="row g-2">
+                        <div class="col-6 col-md-3" th:each="e : ${pendingByKind}">
+                            <div class="border rounded-3 p-2"><div class="fs-4 fw-bold" th:text="${e.value}">0</div><div class="small text-muted" th:text="${e.key.label}"></div></div></div>
+                    </div>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Equipment today</h2><a th:href="@{/reports}">Reports</a></div>
+                    <table class="table mini-table">
+                        <thead><tr><th>Equipment</th><th>Lab</th><th>Free</th><th>Waiting</th></tr></thead>
+                        <tr th:each="s : ${stock}"><td th:text="${s.type}"></td><td th:text="${s.lab}"></td>
+                            <td style="min-width:120px"><span th:text="${s.free} + ' of ' + ${s.capacity}"></span>
+                                <div class="bar"><span th:style="'width:' + (${s.capacity} == 0 ? 100 : ${s.free * 100 / s.capacity}) + '%'"
+                                                      th:classappend="${s.capacity == 0 or s.free == 0} ? 'none' : (${s.free * 2 < s.capacity} ? 'low' : '')"></span></div></td>
+                            <td th:text="${s.waiting}"></td></tr>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Recent activity</h2><a th:href="@{/admin/audit}">Audit log</a></div>
+                    <ul class="list-unstyled feed mb-0">
+                        <li th:each="a : ${activity}"><strong th:text="${a.action.label}"></strong>
+                            · <a th:href="@{/bookings/{id}(id=${a.booking.id})}" th:text="'#' + ${a.booking.id} + ' ' + ${a.booking.resourceLabel}"></a>
+                            <div class="small text-muted" th:text="${#temporals.format(a.createdAt, 'd MMM, h:mm a')} + ' · ' + (${a.actor != null} ? ${a.actor.fullName} : 'System')"></div></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="panel">
+                    <div class="panel-title"><h2>People</h2><a th:href="@{/admin/users}">Users</a></div>
+                    <table class="table mini-table">
+                        <tr th:each="e : ${byRole}"><td th:text="${e.key.label}"></td><td class="text-end fw-semibold" th:text="${e.value}"></td></tr>
+                    </table>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Needs attention</h2></div>
+                    <ul class="list-unstyled feed mb-0">
+                        <li th:each="b : ${critical}"><i class="bi bi-exclamation-octagon text-danger me-1"></i><a th:href="@{/bookings/{id}(id=${b.id})}" th:text="'#' + ${b.id} + ' ' + ${b.resourceLabel}"></a></li>
+                        <li th:each="c : ${overdue}"><i class="bi bi-clock-history text-danger me-1"></i><span th:text="${c.equipment.assetTag} + ' overdue · ' + ${c.booking.forLabel}"></span></li>
+                        <li th:each="i : ${openIncidents}"><i class="bi bi-exclamation-triangle text-warning me-1"></i><span th:text="${i.lab.name} + ': ' + ${i.description}"></span></li>
+                        <li th:each="m : ${maintenanceNow}"><i class="bi bi-tools me-1"></i><span th:text="${m.targetLabel} + ' until ' + ${#temporals.format(m.endDate, 'd MMM')}"></span></li>
+                        <li th:if="${critical.isEmpty() and overdue.isEmpty() and openIncidents.isEmpty() and maintenanceNow.isEmpty()}" class="text-muted">All clear.</li>
+                    </ul>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Holidays and exams</h2><a th:href="@{/admin/calendar}">Calendar</a></div>
+                    <div th:if="${holidays.isEmpty()}" class="empty">None declared in the next 45 days.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${holidays.isEmpty()}">
+                        <li th:each="d : ${holidays}"><strong th:text="${#temporals.format(d.calDate, 'EEE d MMM')}"></strong>
+                            · <span th:text="${d.dayType.label} + (${d.description != null} ? ', ' + ${d.description} : '')"></span></li>
+                    </ul>
+                </div>
+                <div class="panel">
+                    <div class="panel-title"><h2>Announcements</h2><a th:href="@{/announcements}">Send</a></div>
+                    <div th:if="${recentAnnouncements.isEmpty()}" class="empty">None sent yet.</div>
+                    <ul class="list-unstyled feed mb-0" th:unless="${recentAnnouncements.isEmpty()}">
+                        <li th:each="a : ${recentAnnouncements}"><span th:text="${a.message}"></span>
+                            <div class="small text-muted" th:text="${a.sender.fullName} + ' → ' + ${a.audience}"></div></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </th:block>
+</main>
+</body>
+</html>

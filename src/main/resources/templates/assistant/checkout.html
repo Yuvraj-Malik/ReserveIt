@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Check-out · ResrvIt</title></head>
+<body>
+<main>
+    <div class="slip mb-4">
+        <div class="slip-main">
+            <div class="d-flex gap-2 align-items-center"><span th:replace="~{fragments :: status(${b})}"></span>
+                <th:block th:replace="~{fragments :: tags(${b})}"></th:block></div>
+            <div class="resource" th:text="${b.resourceLabel}">Item</div>
+            <div class="when" th:text="${b.whenLabel}">Today</div>
+            <dl class="slip-facts">
+                <div><dt>For</dt><dd th:text="${b.forLabel}"></dd></div>
+                <div><dt>Student</dt><dd th:text="${b.requester.displayName}"></dd></div>
+                <div th:if="${b.equipment != null}"><dt>Last condition</dt><dd th:text="${b.equipment.conditionNote ?: '-'}"></dd></div>
+            </dl>
+        </div>
+        <div class="slip-stub"><span class="text-muted">Booking</span><span class="slip-number" th:text="'#' + ${b.id}"></span></div>
+    </div>
+
+    <form class="panel vstack gap-3" style="max-width:640px" th:if="${b.status.name() == 'APPROVED'}" th:action="@{/assistant/checkout/issue}" method="post">
+        <h2 class="mb-0">Issue the item</h2>
+        <input type="hidden" name="token" th:value="${token}">
+        <div><label class="form-label" for="condition">Condition going out</label>
+            <input class="form-control" id="condition" name="condition" th:value="${b.equipment?.conditionNote}" placeholder="For example: good, all probes present"></div>
+        <p class="text-muted mb-0">It's due back 24 hours from now. A late return is a strike.</p>
+        <button class="btn btn-primary">Issue</button>
+    </form>
+
+    <form class="panel vstack gap-3" style="max-width:640px" th:if="${b.status.name() == 'CHECKED_OUT'}" th:action="@{/assistant/checkout/receive}" method="post">
+        <h2 class="mb-0">Receive the item</h2>
+        <input type="hidden" name="token" th:value="${token}">
+        <p class="mb-0" th:if="${open != null}" th:classappend="${open.dueAt.isBefore(now)} ? 'text-danger fw-semibold'"
+           th:text="(${open.dueAt.isBefore(now)} ? 'Late: was due ' : 'Due ') + ${#temporals.format(open.dueAt, 'EEE d MMM, h:mm a')} + (${open.dueAt.isBefore(now)} ? '. Receiving it records a strike.' : '.')"></p>
+        <div><label class="form-label" for="cin">Condition on return</label><input class="form-control" id="cin" name="condition"></div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="damaged" name="damaged" value="true">
+            <label class="form-check-label" for="damaged">Damaged</label></div>
+        <div id="damageBox" hidden>
+            <label class="form-label" for="damage">What's damaged</label>
+            <textarea class="form-control" id="damage" name="damage" rows="2"></textarea>
+            <div class="form-text">This files a damage report. The student and their group can't book this lab's equipment until it's resolved.</div>
+        </div>
+        <div class="form-check"><input class="form-check-input" type="checkbox" id="maintenance" name="maintenance" value="true">
+            <label class="form-check-label" for="maintenance">Take the item out of service for maintenance</label></div>
+        <button class="btn btn-primary">Receive</button>
+    </form>
+
+    <div class="panel" th:unless="${b.status.name() == 'APPROVED' or b.status.name() == 'CHECKED_OUT'}">
+        <p class="mb-0">This booking is <strong th:text="${b.status.label.toLowerCase()}"></strong>; there's nothing to issue or receive.</p>
+    </div>
+    <script>
+    const dmg = document.getElementById('damaged');
+    if (dmg) dmg.addEventListener('change', () => {
+        document.getElementById('damageBox').hidden = !dmg.checked;
+        document.getElementById('damage').required = dmg.checked;
+    });
+    </script>
+</main>
+</body>
+</html>

@@ -1,0 +1,62 @@
+# ---- Build output
+target/
+build/
+out/
+bin/
+*.class
+*.jar
+*.war
+!.mvn/wrapper/maven-wrapper.jar
+
+# ---- Secrets and local config (never commit these)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+application-local.yml
+application-local.properties
+
+# ---- Logs and runtime files
+*.log
+logs/
+run.log
+*.pid
+hs_err_pid*
+replay_pid*
+
+# ---- Local databases (H2 file mode, etc.)
+*.db
+*.mv.db
+*.trace.db
+
+# ---- IDEs and editors
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.classpath
+.project
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+.sts4-cache/
+nbproject/
+nbbuild/
+.nb-gradle/
+
+# ---- Scala tooling
+.bsp/
+.metals/
+.bloop/
+.scala-build/
+project/target/
+
+# ---- OS clutter
+.DS_Store
+Thumbs.db
+desktop.ini
+*.swp
+*~

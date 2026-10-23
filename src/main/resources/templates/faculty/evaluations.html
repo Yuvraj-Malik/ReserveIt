@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Evaluations · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Evaluation schedule</h1>
+            <p>Students practising for an evaluation pick it from this list, and must book before its date. Adding a date protects matching bookings from the week before it.</p>
+        </div>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <form class="panel vstack gap-3" th:action="@{/faculty/evaluations}" method="post">
+                <h2 class="mb-0">Add an evaluation</h2>
+                <div><label class="form-label" for="courseCode">Course code</label><input class="form-control" id="courseCode" name="courseCode" required placeholder="UEC404"></div>
+                <div><label class="form-label" for="title">Title</label><input class="form-control" id="title" name="title" required placeholder="Lab evaluation 2"></div>
+                <div><label class="form-label" for="labId">Lab</label>
+                    <select class="form-select" id="labId" name="labId" required><option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.name}"></option></select></div>
+                <div><label class="form-label" for="typeId">Equipment used <span class="text-muted fw-normal">(optional)</span></label>
+                    <select class="form-select" id="typeId" name="typeId"><option value="">Any</option><option th:each="t : ${types}" th:value="${t.id}" th:text="${t.name}"></option></select></div>
+                <div><label class="form-label" for="evalDate">Date</label><input class="form-control" type="date" id="evalDate" name="evalDate" required th:min="${today}"></div>
+                <button class="btn btn-primary">Add evaluation</button>
+            </form>
+        </div>
+        <div class="col-lg-7">
+            <div class="panel">
+                <h2>Yours</h2>
+                <div th:if="${mine.isEmpty()}" class="empty">None yet.</div>
+                <table class="table" th:unless="${mine.isEmpty()}">
+                    <thead><tr><th>Date</th><th>Course</th><th>Lab</th><th>Equipment</th></tr></thead>
+                    <tr th:each="e : ${mine}" th:classappend="${e.evalDate.isBefore(today)} ? 'text-muted'">
+                        <td class="fw-semibold" th:text="${#temporals.format(e.evalDate, 'EEE d MMM yyyy')}"></td>
+                        <td th:text="${e.courseCode} + ' ' + ${e.title}"></td>
+                        <td th:text="${e.lab.name}"></td>
+                        <td th:text="${e.equipmentType != null} ? ${e.equipmentType.name} : 'Any'"></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>

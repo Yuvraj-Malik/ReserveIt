@@ -1,0 +1,5 @@
+resrvit:
+  seed-demo-data: false
+spring:
+  datasource:
+    url: jdbc:h2:mem:resrvit-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DEFAULT_NULL_ORDERING=HIGH;DB_CLOSE_DELAY=-1

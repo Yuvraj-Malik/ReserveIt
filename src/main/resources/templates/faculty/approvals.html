@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Approvals · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Approvals</h1>
+            <p>Equipment and rooms you're in charge of. Each queue is decided in order: approve or reject the first request before the next.</p>
+        </div>
+    </div>
+    <div class="panel" th:if="${queues.isEmpty()}">
+        <div class="empty">Nothing waiting.<span th:if="${myLabs.isEmpty() and myRooms.isEmpty()}"> You aren't the in-charge of any lab or room yet.</span></div>
+    </div>
+    <div class="panel" th:each="entry : ${queues}" th:with="first=${entry.value[0]}">
+        <div class="panel-title">
+            <h2 th:text="${first.forEquipment} ? ${first.equipmentType.name} + ' — ' + ${first.lab.name} : ${first.room.name}">Queue</h2>
+            <span class="text-muted fw-semibold" th:text="${first.whenLabel}"></span>
+        </div>
+        <ol class="lane">
+            <li th:each="b, st : ${entry.value}" th:classappend="${st.first} ? 'head'">
+                <div>
+                    <a class="fw-semibold" th:href="@{/bookings/{id}(id=${b.id})}" th:text="${b.forLabel}">Student</a>
+                    <th:block th:replace="~{fragments :: tags(${b})}"></th:block>
+                    <span class="tag tag-wait ms-1" th:if="${hasOffers[b.id]}">Choosing another day</span>
+                    <div class="lane-meta">
+                        <span th:if="${b.reason != null}" th:text="${b.reason.label}"></span>
+                        <span th:if="${b.reasonText != null}" th:text="' · ' + ${b.reasonText}"></span>
+                        <span th:if="${!b.forEquipment}" th:text="' · ' + ${b.whenLabel}"></span>
+                    </div>
+                </div>
+                <div class="d-flex gap-2" th:if="${st.first or hasOffers[entry.value[0].id]}">
+                    <form th:action="@{/bookings/{id}/approve(id=${b.id})}" method="post"><button class="btn btn-sm btn-success">Approve</button></form>
+                    <a class="btn btn-sm btn-outline-secondary" th:href="@{/bookings/{id}(id=${b.id})}">Reject…</a>
+                </div>
+                <span th:unless="${st.first or hasOffers[entry.value[0].id]}" class="lane-meta">waiting</span>
+            </li>
+        </ol>
+    </div>
+</main>
+</body>
+</html>

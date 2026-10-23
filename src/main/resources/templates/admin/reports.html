@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Reports · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Reports</h1><p>Pick a report and period; download it as PDF or CSV.</p></div></div>
+    <form class="panel d-flex flex-wrap gap-2 align-items-end mb-3" method="get">
+        <div><label class="form-label" for="kind">Report</label><select class="form-select" id="kind" name="kind">
+            <option th:each="k : ${kinds}" th:value="${k}" th:text="${k.label}" th:selected="${kind == k}"></option></select></div>
+        <div><label class="form-label" for="from">From</label><input class="form-control" type="date" id="from" name="from" th:value="${from}"></div>
+        <div><label class="form-label" for="to">To</label><input class="form-control" type="date" id="to" name="to" th:value="${to}"></div>
+        <button class="btn btn-primary">Show</button>
+        <a class="btn btn-outline-secondary" th:href="@{/reports/export(kind=${kind},format='pdf',from=${from},to=${to})}"><i class="bi bi-filetype-pdf me-1"></i>PDF</a>
+        <a class="btn btn-outline-secondary" th:href="@{/reports/export(kind=${kind},format='csv',from=${from},to=${to})}"><i class="bi bi-filetype-csv me-1"></i>CSV</a>
+    </form>
+    <div class="panel table-responsive">
+        <div class="panel-title"><h2 th:text="${table.title}"></h2><span class="text-muted" th:text="${table.subtitle}"></span></div>
+        <div th:if="${table.rows.isEmpty()}" class="empty">No data for this period.</div>
+        <table class="table" th:unless="${table.rows.isEmpty()}">
+            <thead><tr><th th:each="h : ${table.headers}" th:text="${h}"></th></tr></thead>
+            <tr th:each="r : ${table.rows}"><td th:each="v : ${r}" th:text="${v}"></td></tr>
+        </table>
+    </div>
+</main>
+</body>
+</html>

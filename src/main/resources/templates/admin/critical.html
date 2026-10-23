@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Critical bookings · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Critical bookings</h1>
+        <p>A timetable, holiday or maintenance change hit these and no replacement was free. Sort each one out with the people involved, then mark it handled.</p></div></div>
+    <div class="panel">
+        <div th:if="${list.isEmpty()}" class="empty">Nothing needs manual handling.</div>
+        <div th:each="b : ${list}" class="border-top py-3">
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <a class="fw-semibold" th:href="@{/bookings/{id}(id=${b.id})}" th:text="'#' + ${b.id} + ' ' + ${b.resourceLabel}"></a>
+                <span th:text="${b.whenLabel}"></span><span class="text-muted" th:text="${b.forLabel}"></span>
+                <th:block th:replace="~{fragments :: tags(${b})}"></th:block>
+            </div>
+            <p class="text-danger mb-2" th:text="${b.criticalNote}"></p>
+            <form th:action="@{/admin/critical/{id}/clear(id=${b.id})}" method="post" class="input-group" style="max-width:560px">
+                <input class="form-control" name="note" placeholder="What was done" aria-label="What was done">
+                <button class="btn btn-outline-secondary">Mark handled</button>
+            </form>
+        </div>
+    </div>
+</main>
+</body>
+</html>

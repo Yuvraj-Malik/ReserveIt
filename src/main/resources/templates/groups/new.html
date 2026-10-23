@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>New group · ResrvIt</title></head>
+<body>
+<main th:with="isStudent=${me.role.name() == 'STUDENT'}">
+    <div class="page-head"><div><h1>Create a group</h1>
+        <p th:if="${isStudent}">You'll be the leader. Every member confirms, then the course faculty approves.</p>
+        <p th:unless="${isStudent}">Groups you create are active straight away.</p></div></div>
+    <form class="panel vstack gap-3" style="max-width:720px" th:action="@{/groups}" method="post">
+        <div class="row g-3">
+            <div class="col-md-6"><label class="form-label" for="name">Group name</label><input class="form-control" id="name" name="name" required></div>
+            <div class="col-md-6"><label class="form-label" for="courseCode">Course code</label><input class="form-control" id="courseCode" name="courseCode" required placeholder="UCS503"></div>
+        </div>
+        <div><label class="form-label" for="projectTitle">Project <span class="text-muted fw-normal">(optional)</span></label><input class="form-control" id="projectTitle" name="projectTitle"></div>
+        <div>
+            <label class="form-label" for="members">Members</label>
+            <select class="form-select" id="members" name="memberIds" multiple size="8" required>
+                <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.displayName}" th:unless="${s.id == me.id}"></option>
+            </select>
+            <div class="form-text">Hold Ctrl (or ⌘) to pick several.</div>
+        </div>
+        <div th:if="${isStudent}">
+            <label class="form-label" for="facultyId">Course faculty (approves the group)</label>
+            <select class="form-select" id="facultyId" name="facultyId" required>
+                <option th:each="f : ${faculty}" th:value="${f.id}" th:text="${f.fullName}"></option>
+            </select>
+        </div>
+        <div th:unless="${isStudent}">
+            <label class="form-label" for="leaderId">Leader</label>
+            <select class="form-select" id="leaderId" name="leaderId" required>
+                <option value="">Pick from the members above…</option>
+                <option th:each="s : ${students}" th:value="${s.id}" th:text="${s.displayName}"></option>
+            </select>
+        </div>
+        <button class="btn btn-primary">Create group</button>
+    </form>
+</main>
+</body>
+</html>

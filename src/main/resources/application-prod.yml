@@ -1,0 +1,19 @@
+# Production profile (Render). Activate with SPRING_PROFILES_ACTIVE=prod.
+# DATABASE_URL may be Render's postgres://user:pass@host:port/db form; DatabaseUrlConfig converts it.
+spring:
+  datasource:
+    url: ${JDBC_DATABASE_URL:}
+    username: ${JDBC_DATABASE_USERNAME:}
+    password: ${JDBC_DATABASE_PASSWORD:}
+  h2:
+    console:
+      enabled: false
+  thymeleaf:
+    cache: true
+
+server:
+  # Render terminates HTTPS in front of the app; trust its forwarded headers so redirects (Google sign-in) use https.
+  forward-headers-strategy: framework
+
+resrvit:
+  seed-demo-data: ${RESRVIT_SEED:false}

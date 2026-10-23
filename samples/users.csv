@@ -1,0 +1,5 @@
+email,full_name,role,department_code,roll_no,lab_code
+riya@thapar.edu,Riya Jain,STUDENT,CSED,102303010,
+arjun@thapar.edu,Arjun Malhotra,STUDENT,ECED,102303011,
+nkaur@thapar.edu,Dr. Navneet Kaur,FACULTY,ECED,,
+lab.mech@thapar.edu,Ravi Teja,LAB_ASSISTANT,MED,,ELAB

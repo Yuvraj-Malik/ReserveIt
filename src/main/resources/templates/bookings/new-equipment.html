@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Book equipment · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div>
+            <h1>Book lab equipment</h1>
+            <p>One day per booking. Collect it with your QR code and return it within 24 hours. You can book each type once every 7 days.</p>
+        </div>
+    </div>
+    <form th:action="@{/bookings/new/equipment}" method="post" class="row g-4" id="eqForm">
+        <div class="col-lg-7">
+            <div class="panel">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label" for="labId">Lab</label>
+                        <select class="form-select" id="labId" name="labId" required>
+                            <option value="">Choose a lab…</option>
+                            <option th:each="l : ${labs}" th:value="${l.id}" th:text="${l.name}">Lab</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="typeId">Equipment</label>
+                        <select class="form-select" id="typeId" name="typeId" required disabled>
+                            <option value="">Pick a lab first</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <span class="form-label d-block">Day</span>
+                        <div id="days" class="days"><span class="text-muted">Pick a lab and equipment to see free days.</span></div>
+                        <input type="hidden" name="date" id="date" required>
+                        <div class="form-text" th:text="'Up to ' + ${leadDays} + ' days ahead. Pending requests expire if nobody approves them by 5 PM that day.'"></div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label" for="reason">Reason</label>
+                        <select class="form-select" id="reason" name="reason" required>
+                            <option value="">Choose…</option>
+                            <option th:each="r : ${reasons}" th:value="${r}" th:text="${r.label}">Reason</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6" id="evalBox" hidden>
+                        <label class="form-label" for="evaluationId">Evaluation</label>
+                        <select class="form-select" id="evaluationId" name="evaluationId">
+                            <option value="">Choose the evaluation…</option>
+                            <option th:each="e : ${evaluations}" th:value="${e.id}" th:attr="data-lab=${e.lab.id},data-date=${e.evalDate}"
+                                    th:text="${#temporals.format(e.evalDate, 'EEE d MMM')} + ' · ' + ${e.courseCode} + ' ' + ${e.title}">Eval</option>
+                        </select>
+                        <div class="form-text">Your day must be before the evaluation. Evaluation bookings are protected and never moved.</div>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="reasonText">Details <span class="text-muted fw-normal">(required for "Other")</span></label>
+                        <input class="form-control" id="reasonText" name="reasonText" maxlength="490">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label" for="note">Note for the lab staff <span class="text-muted fw-normal">(optional, one message)</span></label>
+                        <textarea class="form-control" id="note" name="note" rows="2" maxlength="500" placeholder="For example: I need the x10 probes too."></textarea>
+                        <div class="form-text">You can send one note now. The chat opens for both of you once the request is approved.</div>
+                    </div>
+                    <div class="col-md-6" th:unless="${myGroups.isEmpty()}">
+                        <label class="form-label" for="groupId">Book for</label>
+                        <select class="form-select" id="groupId" name="groupId">
+                            <option value="">Just me</option>
+                            <option th:each="g : ${myGroups}" th:value="${g.id}" th:text="'Group: ' + ${g.name}">Group</option>
+                        </select>
+                        <div class="form-text">A group booking uses the whole group's weekly allowance.</div>
+                    </div>
+                    <div class="col-md-6 d-flex align-items-end">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="urgent" name="urgent" value="true">
+                            <label class="form-check-label" for="urgent">Urgent (lets the lab assistant approve after 2 hours)</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary btn-lg mt-3" type="submit">Send request</button>
+        </div>
+        <div class="col-lg-5">
+            <div class="panel">
+                <h2>How it works</h2>
+                <ol class="mb-0 ps-3">
+                    <li>Requests for the same item and day queue first come, first served.</li>
+                    <li>The lab's faculty in-charge approves in queue order.</li>
+                    <li>If the day fills up, you're offered the nearest free days and can choose within 24 hours.</li>
+                    <li>On the day, show your QR code at the lab to collect.</li>
+                    <li>Late returns are strikes. Three strikes block booking for 14 days.</li>
+                </ol>
+            </div>
+        </div>
+    </form>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const lab = document.getElementById('labId'), type = document.getElementById('typeId');
+        const days = document.getElementById('days'), date = document.getElementById('date');
+        const reason = document.getElementById('reason'), evalBox = document.getElementById('evalBox'), evalSel = document.getElementById('evaluationId');
+
+        lab.addEventListener('change', async () => {
+            type.innerHTML = '<option value="">Loading…</option>'; type.disabled = true; date.value = '';
+            days.innerHTML = '<span class="text-muted">Pick equipment to see free days.</span>';
+            filterEvals();
+            if (!lab.value) return;
+            const list = await (await fetch('/api/labs/' + lab.value + '/types')).json();
+            type.innerHTML = list.length ? '<option value="">Choose…</option>' : '<option value="">No equipment in this lab</option>';
+            list.forEach(t => type.insertAdjacentHTML('beforeend', `<option value="${t.id}">${t.name} (${t.items} in lab)</option>`));
+            type.disabled = !list.length;
+        });
+
+        type.addEventListener('change', async () => {
+            date.value = '';
+            if (!type.value) return;
+            const list = await (await fetch(`/api/availability/equipment?labId=${lab.value}&typeId=${type.value}`)).json();
+            days.innerHTML = '';
+            list.forEach(d => {
+                const b = document.createElement('button');
+                b.type = 'button';
+                b.className = 'day ' + (d.holiday ? 'closed' : d.free > 0 ? 'free' : 'full');
+                b.dataset.date = d.date;
+                b.innerHTML = `${d.label}<strong>${d.holiday ? 'Closed' : d.free + ' free'}</strong>${d.waiting ? d.waiting + ' waiting' : '&nbsp;'}`;
+                b.disabled = d.holiday;
+                b.setAttribute('aria-pressed', 'false');
+                b.addEventListener('click', () => {
+                    days.querySelectorAll('.day').forEach(x => { x.classList.remove('picked'); x.setAttribute('aria-pressed', 'false'); });
+                    b.classList.add('picked'); b.setAttribute('aria-pressed', 'true'); date.value = d.date;
+                });
+                days.appendChild(b);
+            });
+        });
+
+        function filterEvals() {
+            [...evalSel.options].forEach(o => { if (o.value) o.hidden = lab.value && o.dataset.lab !== lab.value; });
+        }
+        reason.addEventListener('change', () => {
+            evalBox.hidden = reason.value !== 'EVALUATION_PRACTICE';
+            evalSel.required = !evalBox.hidden;
+        });
+        document.getElementById('eqForm').addEventListener('submit', e => {
+            if (!date.value) { e.preventDefault(); alert('Pick a day.'); }
+        });
+    });
+    </script>
+</main>
+</body>
+</html>

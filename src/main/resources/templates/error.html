@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{bare :: page(~{::title}, ~{::main})}">
+<head><title>Something went wrong · ResrvIt</title></head>
+<body>
+<main>
+    <h1 th:text="${status == 404} ? 'Page not found' : (${status == 403} ? 'Not allowed' : 'Something went wrong')">Error</h1>
+    <p class="text-muted" th:text="${status == 404} ? 'That address doesn\'t exist.' : (${status == 403} ? 'Your role can\'t open this page.' : 'The server hit an error. Try again, and tell the admin if it keeps happening.')"></p>
+    <a class="btn btn-primary" href="/">Go home</a>
+</main>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Announcements · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Announcements</h1>
+        <p>Send a notification to everyone, everyone with a role, one person, a study group, or a society's office-bearers.</p></div></div>
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <form class="panel vstack gap-3" th:action="@{/announcements}" method="post" id="annForm">
+                <h2 class="mb-0">New announcement</h2>
+                <fieldset>
+                    <legend class="form-label fs-6">Send to</legend>
+                    <div class="d-flex flex-wrap gap-2">
+                        <th:block th:each="a, st : ${audiences}">
+                            <input type="radio" class="btn-check" name="audience" th:id="'aud' + ${st.index}" th:value="${a}" th:checked="${st.first}">
+                            <label class="btn btn-outline-secondary btn-sm" th:for="'aud' + ${st.index}" th:text="${a.label}">Everyone</label>
+                        </th:block>
+                    </div>
+                </fieldset>
+                <div data-for="ROLE" hidden><label class="form-label" for="role">Role</label>
+                    <select class="form-select" id="role" name="role"><option th:each="r : ${roles}" th:value="${r}" th:text="${r.label} + 's'"></option></select></div>
+                <div data-for="PERSON" hidden><label class="form-label" for="person">Person</label>
+                    <select class="form-select" id="person" name="person"><option th:each="u : ${people}" th:value="${u.id}" th:text="${u.displayName} + ' · ' + ${u.role.label}"></option></select></div>
+                <div data-for="GROUP" hidden><label class="form-label" for="group">Study group</label>
+                    <select class="form-select" id="group" name="group"><option th:each="g : ${groups}" th:value="${g.id}" th:text="${g.name} + ' (' + ${g.courseCode} + ', ' + ${g.members.size()} + ' members)'"></option></select></div>
+                <div data-for="SOCIETY" hidden><label class="form-label" for="society">Society</label>
+                    <select class="form-select" id="society" name="society"><option th:each="s : ${societies}" th:value="${s.id}" th:text="${s.name}"></option></select></div>
+                <div><label class="form-label" for="message">Message</label>
+                    <textarea class="form-control" id="message" name="message" rows="4" maxlength="900" required placeholder="For example: Electronics Lab is closed on Friday for inspection."></textarea></div>
+                <div class="form-check"><input class="form-check-input" type="checkbox" id="email" name="email" value="true">
+                    <label class="form-check-label" for="email">Also email it (to people who allow email)</label></div>
+                <div><button class="btn btn-primary"><i class="bi bi-megaphone me-1"></i>Send announcement</button></div>
+            </form>
+        </div>
+        <div class="col-lg-6">
+            <div class="panel">
+                <h2 th:text="${me.role.name() == 'SUPER_ADMIN'} ? 'Recent announcements' : 'Sent by you'">Sent</h2>
+                <div th:if="${history.isEmpty()}" class="empty">Nothing sent yet.</div>
+                <ul class="list-unstyled feed mb-0" th:unless="${history.isEmpty()}">
+                    <li th:each="a : ${history}">
+                        <div th:text="${a.message}"></div>
+                        <small class="text-muted" th:text="${#temporals.format(a.createdAt, 'd MMM, h:mm a')} + ' · ' + ${a.sender.fullName} + ' → ' + ${a.audience} + ' (' + ${a.recipientCount} + ')'"></small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('annForm');
+        const sync = () => {
+            const v = form.querySelector('input[name=audience]:checked').value;
+            form.querySelectorAll('[data-for]').forEach(d => d.hidden = d.dataset.for !== v);
+        };
+        form.querySelectorAll('input[name=audience]').forEach(r => r.addEventListener('change', sync));
+        sync();
+    });
+    </script>
+</main>
+</body>
+</html>

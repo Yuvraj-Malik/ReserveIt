@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Notifications · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head"><div><h1>Notifications</h1><p>Your latest 100. Opening one marks it as read.</p></div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-outline-secondary" type="button" id="pgReadAll"><i class="bi bi-check2-all me-1"></i>Mark all as read</button>
+            <button class="btn btn-outline-danger" type="button" id="pgDeleteAll"><i class="bi bi-trash3 me-1"></i>Delete all</button>
+        </div></div>
+    <div class="panel p-0 overflow-hidden">
+        <div th:if="${items.isEmpty()}" class="empty px-4">You're all caught up.</div>
+        <ul class="notif-list" style="max-height:none" th:unless="${items.isEmpty()}">
+            <li th:each="n : ${items}" class="notif-item" th:classappend="${!n.read} ? 'unread'" th:attr="data-id=${n.id}">
+                <a class="notif-text" th:href="@{/notifications/{id}/open(id=${n.id})}">
+                    <span th:text="${n.message}">Message</span>
+                    <small th:text="${#temporals.format(n.createdAt, 'd MMM yyyy, h:mm a')}"></small>
+                </a>
+                <div class="notif-actions">
+                    <button th:unless="${n.read}" type="button" class="btn icon-btn sm" data-act="read" title="Mark as read" aria-label="Mark as read"><i class="bi bi-check2"></i></button>
+                    <button type="button" class="btn icon-btn sm" data-act="delete" title="Delete" aria-label="Delete"><i class="bi bi-x-lg"></i></button>
+                </div>
+            </li>
+        </ul>
+    </div>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        document.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', async () => {
+            const id = b.closest('li').dataset.id;
+            await ResrvIt.post('/api/notifications/' + id + '/' + b.dataset.act);
+            location.reload();
+        }));
+        document.getElementById('pgReadAll').onclick = async () => { await ResrvIt.post('/api/notifications/read-all'); location.reload(); };
+        document.getElementById('pgDeleteAll').onclick = async () => {
+            if (!confirm('Delete all notifications?')) return;
+            await ResrvIt.post('/api/notifications/delete-all'); location.reload();
+        };
+    });
+    </script>
+</main>
+</body>
+</html>

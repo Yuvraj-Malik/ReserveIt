@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Booking · ResrvIt</title></head>
+<body>
+<main>
+    <div class="slip mb-4">
+        <div class="slip-main">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="text-muted fw-semibold" th:text="${b.kind.label}">Equipment</span>
+                <span th:replace="~{fragments :: status(${b})}"></span>
+                <th:block th:replace="~{fragments :: tags(${b})}"></th:block>
+            </div>
+            <div class="resource" th:text="${b.resourceLabel}">Oscilloscope</div>
+            <div class="when" th:text="${b.whenLabel}">Mon</div>
+            <dl class="slip-facts">
+                <div><dt>Requested by</dt><dd th:text="${b.requester.displayName}">Aarav</dd></div>
+                <div th:if="${b.group != null}"><dt>Group</dt><dd><a th:href="@{/groups/{id}(id=${b.group.id})}" th:text="${b.group.name}"></a></dd></div>
+                <div th:if="${b.society != null}"><dt>Society</dt><dd th:text="${b.society.name}"></dd></div>
+                <div th:if="${b.reason != null}"><dt>Reason</dt><dd th:text="${b.reason.label}"></dd></div>
+                <div th:if="${b.reasonText != null}"><dt>Details</dt><dd th:text="${b.reasonText}"></dd></div>
+                <div th:if="${b.evaluation != null}"><dt>Evaluation</dt>
+                    <dd th:text="${b.evaluation.courseCode} + ' ' + ${b.evaluation.title} + ', ' + ${#temporals.format(b.evaluation.evalDate, 'EEE d MMM')}"></dd></div>
+                <div th:if="${b.equipment != null}"><dt>Item</dt><dd th:text="${b.equipment.assetTag}"></dd></div>
+                <div th:if="${b.decidedBy != null}"><dt>Decided by</dt><dd th:text="${b.decidedBy.fullName}"></dd></div>
+                <div th:if="${b.claimedBy != null and b.pending}"><dt>Claimed by</dt><dd th:text="${b.claimedBy.fullName}"></dd></div>
+                <div th:if="${b.decisionNote != null}"><dt>Note</dt><dd th:text="${b.decisionNote}"></dd></div>
+                <div th:if="${b.critical}"><dt>Needs attention</dt><dd class="text-danger" th:text="${b.criticalNote}"></dd></div>
+            </dl>
+        </div>
+        <div class="slip-stub">
+            <th:block th:if="${b.qrToken != null and b.status.name() == 'APPROVED' and isParty}">
+                <img th:src="@{/bookings/{id}/qr.png(id=${b.id})}" alt="QR code for collecting this booking">
+                <small class="text-muted">Show this at the lab to collect.</small>
+            </th:block>
+            <th:block th:unless="${b.qrToken != null and b.status.name() == 'APPROVED' and isParty}">
+                <span class="text-muted">Request</span>
+                <span class="slip-number" th:text="'#' + ${b.id}">#1</span>
+                <span th:if="${position != null}" class="fw-semibold" th:text="${position == 1} ? 'First in line' : 'Number ' + ${position} + ' in line'"></span>
+            </th:block>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <!-- Offers for the requester -->
+            <div class="panel" th:if="${!offers.isEmpty()}">
+                <div class="panel-title"><h2>Pick another day</h2></div>
+                <p class="text-muted">Your day filled up. The first option is held for you and kept automatically if you don't answer within 24 hours.</p>
+                <div class="d-flex flex-wrap gap-2" th:if="${isParty}">
+                    <form th:each="o : ${offers}" th:action="@{/offers/{id}/accept(id=${o.id})}" method="post">
+                        <button class="btn" th:classappend="${o.optionRank == 1} ? 'btn-success' : 'btn-outline-secondary'"
+                                th:text="${#temporals.format(o.offeredDate, 'EEE d MMM')}">Day</button>
+                    </form>
+                </div>
+                <ul th:unless="${isParty}"><li th:each="o : ${offers}" th:text="${#temporals.format(o.offeredDate, 'EEE d MMM')}"></li></ul>
+            </div>
+
+            <!-- Decisions -->
+            <div class="panel" th:if="${b.pending and mode != 'NONE'}">
+                <div class="panel-title"><h2>Decide</h2></div>
+                <div th:if="${ahead != null}" class="alert alert-warning py-2">
+                    Request <a th:href="@{/bookings/{id}(id=${ahead.id})}" th:text="'#' + ${ahead.id}"></a> is ahead in the queue. Approvals follow queue order.
+                </div>
+                <div th:if="${mode == 'EMERGENCY'}" class="alert alert-info py-2">
+                    The in-charge is available and the 2-hour fallback hasn't passed. You can still approve as an emergency, with a reason.
+                </div>
+                <div th:if="${mode == 'FALLBACK'}" class="alert alert-info py-2">
+                    You can approve under the lab-assistant fallback; the in-charge will be told.
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-3" th:if="${b.kind.name() == 'GD_ROOM' or b.kind.name() == 'SOCIETY_ROOM'}">
+                    <form th:if="${b.claimedBy == null}" th:action="@{/bookings/{id}/claim(id=${b.id})}" method="post">
+                        <button class="btn btn-outline-secondary">Claim</button></form>
+                    <form th:if="${b.claimedBy != null and b.claimedBy.id == me.id}" th:action="@{/bookings/{id}/release(id=${b.id})}" method="post">
+                        <button class="btn btn-outline-secondary">Release claim</button></form>
+                </div>
+                <p th:if="${b.claimedBy != null and b.claimedBy.id != me.id and me.role.name() != 'SUPER_ADMIN'}" class="text-muted mb-0"
+                   th:text="${b.claimedBy.fullName} + ' has claimed this request, so only they can decide it.'"></p>
+                <div class="row g-3" th:if="${(mode == 'NORMAL' or mode == 'FALLBACK') and (b.claimedBy == null or b.claimedBy.id == me.id or me.role.name() == 'SUPER_ADMIN')}">
+                    <form class="col-md-6" th:action="@{/bookings/{id}/approve(id=${b.id})}" method="post">
+                        <label class="form-label" for="anote">Note <span class="text-muted fw-normal">(optional)</span></label>
+                        <input class="form-control mb-2" id="anote" name="note">
+                        <button class="btn btn-success w-100">Approve</button>
+                    </form>
+                    <form class="col-md-6" th:action="@{/bookings/{id}/reject(id=${b.id})}" method="post">
+                        <label class="form-label" for="rnote">Reason</label>
+                        <input class="form-control mb-2" id="rnote" name="note" required>
+                        <button class="btn btn-outline-danger w-100">Reject</button>
+                    </form>
+                </div>
+                <form th:if="${me.role.name() == 'LAB_ASSISTANT'}" class="mt-3" th:action="@{/bookings/{id}/emergency(id=${b.id})}" method="post">
+                    <label class="form-label" for="ereason">Emergency approval</label>
+                    <div class="input-group">
+                        <input class="form-control" id="ereason" name="reason" placeholder="Why it can't wait" required>
+                        <button class="btn btn-outline-primary">Approve now</button>
+                    </div>
+                </form>
+                <form th:if="${me.role.name() == 'LAB_ASSISTANT' and mode == 'EMERGENCY'}" class="mt-2" th:action="@{/bookings/{id}/reject(id=${b.id})}" method="post">
+                    <div class="input-group">
+                        <input class="form-control" name="note" placeholder="Reason for rejecting" required>
+                        <button class="btn btn-outline-danger">Reject</button>
+                    </div>
+                </form>
+                <form th:if="${b.kind.name() == 'EQUIPMENT'}" class="mt-3" th:action="@{/bookings/{id}/offer(id=${b.id})}" method="post">
+                    <button class="btn btn-link px-0">Offer this student other days instead</button>
+                </form>
+            </div>
+
+            <!-- Reassign a freed slot -->
+            <div class="panel" th:if="${reassignCandidates != null}">
+                <div class="panel-title"><h2>Give this freed slot to someone waiting</h2></div>
+                <div th:if="${reassignCandidates.isEmpty()}" class="empty">Nobody is waiting for a matching slot.</div>
+                <form th:unless="${reassignCandidates.isEmpty()}" th:action="@{/bookings/{id}/reassign(id=${b.id})}" method="post" class="d-flex gap-2">
+                    <select class="form-select" name="targetId" aria-label="Waiting request">
+                        <option th:each="p : ${reassignCandidates}" th:value="${p.id}" th:text="'#' + ${p.id} + ' ' + ${p.forLabel} + ' — ' + ${p.whenLabel}"></option>
+                    </select>
+                    <button class="btn btn-primary text-nowrap">Reassign and approve</button>
+                </form>
+            </div>
+
+            <!-- Queue -->
+            <div class="panel" th:if="${queue != null and queue.size() > 1}">
+                <div class="panel-title"><h2>Queue for this slot</h2></div>
+                <ol class="lane">
+                    <li th:each="q, st : ${queue}" th:classappend="${st.first} ? 'head'">
+                        <div>
+                            <a th:href="@{/bookings/{id}(id=${q.id})}" th:text="${q.forLabel}" th:if="${mode != 'NONE'}"></a>
+                            <span th:unless="${mode != 'NONE'}" th:text="${q.id == b.id} ? 'You' : 'Another request'"></span>
+                            <th:block th:replace="~{fragments :: tags(${q})}"></th:block>
+                        </div>
+                        <span class="lane-meta" th:text="${#temporals.format(q.createdAt, 'd MMM, h:mm a')}"></span>
+                    </li>
+                </ol>
+            </div>
+
+            <!-- Society specifics -->
+            <div class="panel" th:if="${b.kind.name() == 'SOCIETY_ROOM'}">
+                <div class="panel-title"><h2>Days left out</h2>
+                    <a th:if="${canRenew}" class="btn btn-sm btn-outline-primary" th:href="@{/bookings/new/society(renew=${b.id})}">Request renewal</a></div>
+                <div th:if="${b.excludedDateList.isEmpty()}" class="empty">None. Every day in the range is available.</div>
+                <p th:unless="${b.excludedDateList.isEmpty()}">
+                    <span th:each="d, st : ${b.excludedDateList}" th:text="${#temporals.format(d, 'EEE d MMM')} + (${st.last} ? '' : ', ')"></span>
+                </p>
+                <th:block th:if="${societyHistory.size() > 1}">
+                    <h3 class="mt-3">Earlier bookings by this society</h3>
+                    <table class="table">
+                        <tr th:each="h : ${societyHistory}" th:unless="${h.id == b.id}">
+                            <td><a th:href="@{/bookings/{id}(id=${h.id})}" th:text="${h.whenLabel}"></a></td>
+                            <td th:text="${h.room.name}"></td><td><span th:replace="~{fragments :: status(${h})}"></span></td></tr>
+                    </table>
+                </th:block>
+            </div>
+
+            <div class="panel" th:if="${!checkouts.isEmpty()}">
+                <div class="panel-title"><h2>Check-out log</h2></div>
+                <table class="table">
+                    <tr th:each="c : ${checkouts}">
+                        <td th:text="${c.equipment.assetTag}"></td>
+                        <td th:text="'Out ' + ${#temporals.format(c.issuedAt, 'd MMM h:mm a')}"></td>
+                        <td th:text="${c.returnedAt != null} ? 'Back ' + ${#temporals.format(c.returnedAt, 'd MMM h:mm a')} : 'Due ' + ${#temporals.format(c.dueAt, 'd MMM h:mm a')}"></td>
+                        <td><span class="tag tag-urgent" th:if="${c.late}">Late</span> <span class="tag tag-critical" th:if="${c.damaged}">Damaged</span></td>
+                    </tr>
+                </table>
+            </div>
+
+            <form th:if="${canCancel}" th:action="@{/bookings/{id}/cancel(id=${b.id})}" method="post" class="mt-2"
+                  data-confirm="Cancel this booking? The slot goes back to the admins to reassign.">
+                <button class="btn btn-outline-danger">Cancel booking</button>
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="panel">
+                <div class="panel-title"><h2>History</h2></div>
+                <ol class="list-unstyled mb-0">
+                    <li th:each="h : ${history}" class="py-2 border-top">
+                        <div class="fw-semibold" th:text="${h.action.label}">Requested</div>
+                        <div class="small text-muted" th:text="${#temporals.format(h.createdAt, 'd MMM yyyy, h:mm a')} + ' · ' + (${h.actor != null} ? ${h.actor.fullName} : 'System')"></div>
+                        <div class="small" th:if="${h.note != null}" th:text="${h.note}"></div>
+                    </li>
+                    <li th:each="m : ${moves}" class="py-2 border-top">
+                        <div class="fw-semibold">Queue reordered</div>
+                        <div class="small text-muted" th:text="${#temporals.format(m.createdAt, 'd MMM, h:mm a')} + ' · ' + ${m.actor.fullName}"></div>
+                        <div class="small" th:text="${m.reason}"></div>
+                    </li>
+                </ol>
+            </div>
+            <form th:if="${chatOpen and (isParty or mode != 'NONE')}" th:action="@{/chat/booking/{id}(id=${b.id})}" method="post" class="mt-3">
+                <button class="btn btn-outline-secondary"><i class="bi bi-chat-dots me-1"></i>
+                    <span th:text="${isParty} ? 'Chat with the staff handling this' : 'Chat with the student'">Chat</span></button></form>
+            <p th:if="${!chatOpen and isParty and b.pending}" class="small text-muted mt-3 mb-0"><i class="bi bi-lock me-1"></i>Chat opens once this request is approved.</p>
+        </div>
+    </div>
+</main>
+</body>
+</html>

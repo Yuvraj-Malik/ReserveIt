@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{bare :: page(~{::title}, ~{::main})}">
+<head><title>Verify email · ResrvIt</title></head>
+<body>
+<main>
+    <h1 class="mb-1">Check your email</h1>
+    <p class="text-muted">Enter the 6-digit code we sent. It expires in 10 minutes.</p>
+    <div class="alert alert-info" th:if="${devOtp}">
+        Email isn't configured on this server, so here is your code: <strong th:text="${devOtp}">123456</strong>
+    </div>
+    <form th:action="@{/verify}" method="post" class="vstack gap-3">
+        <div>
+            <label class="form-label" for="email">Email</label>
+            <input class="form-control" id="email" name="email" type="email" required th:value="${email}">
+        </div>
+        <div>
+            <label class="form-label" for="code">Code</label>
+            <input class="form-control form-control-lg" id="code" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required
+                   autocomplete="one-time-code" style="letter-spacing:.4em;font-weight:700">
+        </div>
+        <button class="btn btn-primary btn-lg" type="submit">Verify email</button>
+    </form>
+    <form th:action="@{/verify/resend}" method="post" class="mt-3">
+        <input type="hidden" name="email" th:value="${email}">
+        <button class="btn btn-link p-0" type="submit">Send a new code</button>
+    </form>
+</main>
+</body>
+</html>

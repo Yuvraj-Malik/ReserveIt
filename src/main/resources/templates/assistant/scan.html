@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" th:replace="~{layout :: page(~{::title}, ~{::main})}">
+<head><title>Check-out and check-in · ResrvIt</title></head>
+<body>
+<main>
+    <div class="page-head">
+        <div><h1>Check-out and check-in</h1><p>Scan the student's QR code, or type the code under it.</p></div>
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="panel">
+                <div id="reader" class="mb-3"></div>
+                <button class="btn btn-outline-primary mb-3" type="button" id="startCam"><i class="bi bi-camera me-1"></i>Scan with camera</button>
+                <form th:action="@{/assistant/checkout}" method="get" class="input-group">
+                    <input class="form-control" name="token" id="token" placeholder="Booking code" required aria-label="Booking code">
+                    <button class="btn btn-primary">Open</button>
+                </form>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="panel">
+                <div class="panel-title"><h2>Collecting today</h2></div>
+                <div th:if="${pickups.isEmpty()}" class="empty">No approved pick-ups today.</div>
+                <table class="table align-middle" th:unless="${pickups.isEmpty()}">
+                    <tr th:each="b : ${pickups}">
+                        <td class="fw-semibold" th:text="${b.forLabel}"></td>
+                        <td th:text="${b.equipmentType.name} + ' · ' + ${b.equipment != null ? b.equipment.assetTag : '-'}"></td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" th:href="@{/assistant/checkout(token=${b.qrToken})}">Issue</a></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="panel">
+                <div class="panel-title"><h2>Out on loan</h2></div>
+                <div th:if="${out.isEmpty()}" class="empty">Nothing is out.</div>
+                <table class="table align-middle" th:unless="${out.isEmpty()}">
+                    <tr th:each="c : ${out}">
+                        <td class="fw-semibold" th:text="${c.equipment.assetTag}"></td>
+                        <td th:text="${c.booking.forLabel}"></td>
+                        <td th:classappend="${c.dueAt.isBefore(#temporals.createNow())} ? 'text-danger fw-semibold'" th:text="'due ' + ${#temporals.format(c.dueAt, 'EEE h:mm a')}"></td>
+                        <td class="text-end"><a class="btn btn-sm btn-outline-secondary" th:href="@{/assistant/checkout(token=${c.booking.qrToken})}">Receive</a></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <script>
+    document.getElementById('startCam').addEventListener('click', () => {
+        const scanner = new Html5Qrcode('reader');
+        scanner.start({ facingMode: 'environment' }, { fps: 10, qrbox: 220 }, text => {
+            scanner.stop();
+            location.href = '/assistant/checkout?token=' + encodeURIComponent(text);
+        }).catch(err => alert('Camera unavailable: ' + err));
+    });
+    </script>
+</main>
+</body>
+</html>
