@@ -13,6 +13,7 @@
         (function () {
             var el = document.documentElement;
             if (el.dataset.themePref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches) el.setAttribute('data-bs-theme', 'dark');
+            if (localStorage.getItem('sidebar_collapsed') === 'true') el.classList.add('sidebar-collapsed');
         })();
     </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,7 +33,10 @@
 <!-- Sidebar: every destination is a plain link. Below 768 px it slides in from the left. -->
 <aside class="sidebar offcanvas-md offcanvas-start" tabindex="-1" id="sidebar" aria-label="Main navigation" th:if="${me != null}">
     <div class="sidebar-head">
-        <a class="brand" th:href="@{/}">Resrv<span>It</span></a>
+        <button type="button" class="brand-toggle" id="sidebarBrandToggle" aria-label="Toggle sidebar" title="Collapse sidebar">
+            <span class="brand-full">Resrv<span>It</span> <i class="bi bi-layout-sidebar-inset brand-collapse-icon" title="Collapse sidebar"></i></span>
+            <span class="brand-mini" title="Expand sidebar"><i class="bi bi-layout-sidebar"></i></span>
+        </button>
         <button type="button" class="btn-close btn-close-white d-md-none" data-bs-dismiss="offcanvas" data-bs-target="#sidebar" aria-label="Close menu"></button>
     </div>
     <nav class="sidebar-nav">

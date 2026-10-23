@@ -59,6 +59,29 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   if (best) { best.classList.add('active'); best.setAttribute('aria-current', 'page'); }
 
+  // ---- sidebar collapse toggle (ChatGPT-style)
+  const brandToggle = document.getElementById('sidebarBrandToggle');
+  if (brandToggle) {
+    const isCollapsed = document.documentElement.classList.contains('sidebar-collapsed');
+    brandToggle.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+
+    brandToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      const collapsed = document.documentElement.classList.toggle('sidebar-collapsed');
+      document.body.classList.toggle('sidebar-collapsed', collapsed);
+      try { localStorage.setItem('sidebar_collapsed', collapsed ? 'true' : 'false'); } catch (err) {}
+      brandToggle.setAttribute('title', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+      // Notify components like calendar/tables to resize
+      window.dispatchEvent(new Event('resize'));
+    });
+  }
+
+  // Populate title tooltips for sidebar links when collapsed
+  document.querySelectorAll('.sidebar .nav-item-link').forEach(a => {
+    const label = a.querySelector('span:not(.nav-badge)')?.textContent?.trim();
+    if (label && !a.getAttribute('title')) a.setAttribute('title', label);
+  });
+
   // ---- notifications panel
   const bell = document.getElementById('bellBtn');
   const panel = document.getElementById('notifPanel');
