@@ -638,6 +638,8 @@ public class DemoData {
     // ================================================================== builders
 
     private Department dept(String code, String name) {
+        var existing = departments.findByCodeIgnoreCase(code);
+        if (existing.isPresent()) return existing.get();
         Department d = new Department();
         d.setCode(code);
         d.setName(name);
@@ -645,6 +647,9 @@ public class DemoData {
     }
 
     private User user(String handle, String name, Role role, Department dept, Lab lab, String roll, String phone) {
+        // An account with this email already exists (e.g. the bootstrap admin): reuse it untouched.
+        var existing = users.findByEmailIgnoreCase(handle + dom);
+        if (existing.isPresent()) return existing.get();
         User u = new User();
         u.setEmail(handle + dom);
         u.setFullName(name);
@@ -660,6 +665,8 @@ public class DemoData {
     }
 
     private User pendingUser(String handle, String name, String roll, Department dept) {
+        var existing = users.findByEmailIgnoreCase(handle + dom);
+        if (existing.isPresent()) return existing.get();
         User u = user(handle, name, Role.STUDENT, dept, null, roll, null);
         u.setStatus(UserStatus.PENDING_ACTIVATION);
         u.setCreatedAt(now.minusHours(5 + rnd.nextInt(40)));
@@ -689,6 +696,8 @@ public class DemoData {
     }
 
     private EquipmentType type(String name, String desc) {
+        var existing = types.findByNameIgnoreCase(name);
+        if (existing.isPresent()) return existing.get();
         EquipmentType t = new EquipmentType();
         t.setName(name);
         t.setDescription(desc);
@@ -742,6 +751,8 @@ public class DemoData {
     }
 
     private Society society(String name, String desc) {
+        var existing = societies.findAllByOrderByNameAsc().stream().filter(x -> x.getName().equalsIgnoreCase(name)).findFirst();
+        if (existing.isPresent()) return existing.get();
         Society s = new Society();
         s.setName(name);
         s.setDescription(desc);
