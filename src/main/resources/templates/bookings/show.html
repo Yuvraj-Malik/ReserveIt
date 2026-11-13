@@ -23,7 +23,7 @@
                 <div th:if="${b.equipment != null}"><dt>Item</dt><dd th:text="${b.equipment.assetTag}"></dd></div>
                 <div th:if="${b.decidedBy != null}"><dt>Decided by</dt><dd th:text="${b.decidedBy.fullName}"></dd></div>
                 <div th:if="${b.claimedBy != null and b.pending}"><dt>Claimed by</dt><dd th:text="${b.claimedBy.fullName}"></dd></div>
-                <div th:if="${b.decisionNote != null}"><dt>Note</dt><dd th:text="${b.decisionNote}"></dd></div>
+                <div th:if="${!#strings.isEmpty(b.decisionNote)}"><dt>Staff note</dt><dd th:text="${b.decisionNote}"></dd></div>
                 <div th:if="${b.critical}"><dt>Needs attention</dt><dd class="text-danger" th:text="${b.criticalNote}"></dd></div>
             </dl>
         </div>

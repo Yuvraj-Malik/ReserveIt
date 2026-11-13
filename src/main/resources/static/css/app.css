@@ -414,3 +414,9 @@ body.app { display: flex; min-height: 100vh; }
 .settings-nav a:hover { background: var(--soft); }
 .google-btn { display: inline-flex; align-items: center; justify-content: center; gap: .6rem; border: 1px solid var(--line); background: #fff; color: #1f1f1f; font-weight: 600; }
 .google-btn:hover { background: #f6f7f9; color: #1f1f1f; }
+
+/* Phones: let wide tables scroll sideways instead of squashing their columns. */
+@media (max-width: 767.98px) {
+  main table.table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  main table.table th, main table.table td { white-space: nowrap; }
+}
