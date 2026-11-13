@@ -22,13 +22,13 @@ public class StudyGroup extends BaseEntity {
 
     private String projectTitle;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User leader;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User createdBy;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User courseFaculty;
 
     @Enumerated(EnumType.STRING)

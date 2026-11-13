@@ -16,10 +16,10 @@ import java.time.LocalTime;
 @Setter
 public class Strike extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking booking;
 
     private String reason;
@@ -28,7 +28,7 @@ public class Strike extends BaseEntity {
 
     private boolean waived;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User waivedBy;
 
     private boolean consumed;

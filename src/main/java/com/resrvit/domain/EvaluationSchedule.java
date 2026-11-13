@@ -16,13 +16,13 @@ import java.time.LocalTime;
 @Setter
 public class EvaluationSchedule extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User faculty;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lab lab;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private EquipmentType equipmentType;
 
     private String courseCode;

@@ -16,10 +16,10 @@ import java.time.LocalTime;
 @Setter
 public class QueueAudit extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking booking;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User actor;
 
     private long oldRank;

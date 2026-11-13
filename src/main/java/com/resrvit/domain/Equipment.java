@@ -18,10 +18,10 @@ public class Equipment extends BaseEntity {
 
     private String assetTag;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private EquipmentType type;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lab lab;
 
     @Enumerated(EnumType.STRING)

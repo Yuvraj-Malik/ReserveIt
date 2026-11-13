@@ -13,10 +13,10 @@ import java.time.LocalDateTime;
 @Setter
 public class ConversationMember extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Conversation conversation;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
     private LocalDateTime lastReadAt;

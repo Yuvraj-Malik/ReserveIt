@@ -5,6 +5,14 @@ spring:
     url: ${JDBC_DATABASE_URL:}
     username: ${JDBC_DATABASE_USERNAME:}
     password: ${JDBC_DATABASE_PASSWORD:}
+    # Small pool for Render's free plan; recycle connections before the server drops idle ones.
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 120000
+      max-lifetime: 300000
+      keepalive-time: 60000
+      connection-timeout: 15000
   h2:
     console:
       enabled: false

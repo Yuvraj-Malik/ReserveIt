@@ -16,7 +16,7 @@ import java.time.LocalTime;
 @Setter
 public class SlotOffer extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking booking;
 
     private LocalDate offeredDate;

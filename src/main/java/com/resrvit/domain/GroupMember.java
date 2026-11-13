@@ -16,10 +16,10 @@ import java.time.LocalTime;
 @Setter
 public class GroupMember extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private StudyGroup group;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
     private boolean confirmed;

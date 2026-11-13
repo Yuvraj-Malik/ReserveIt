@@ -24,13 +24,13 @@ public class Room extends BaseEntity {
     @JdbcTypeCode(SqlTypes.VARCHAR)
     private RoomType type;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Department department;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lab lab;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User inCharge;
 
     private int capacity;

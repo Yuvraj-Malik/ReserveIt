@@ -16,7 +16,7 @@ import java.time.LocalTime;
 @Setter
 public class Notification extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
     private String message;
