@@ -3,7 +3,7 @@
 <head><title>Impact preview · ResrvIt</title></head>
 <body>
 <main>
-    <div class="page-head"><div><h1 th:text="${title}">Impact preview</h1>
+    <div class="page-head"><div><h1 th:text="${previewTitle}">Impact preview</h1>
         <p>Nothing has changed yet. Check what happens to existing approved bookings, then confirm.</p></div></div>
     <div class="panel">
         <ul class="mb-0"><li th:each="n : ${result.notes}" th:text="${n}"></li></ul>
