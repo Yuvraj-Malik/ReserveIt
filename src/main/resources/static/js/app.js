@@ -128,9 +128,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  const isJson = (res) => res.ok && (res.headers.get('content-type') || '').includes('json');
+
   async function load() {
     const res = await fetch('/api/notifications', { credentials: 'same-origin' });
-    if (!res.ok) return;
+    if (!isJson(res)) return; // signed out: the server sent the login page
     const data = await res.json();
     render(data.items);
     setCount('notifications', data.unread);
@@ -138,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   async function refreshCounters() {
     const res = await fetch('/api/counters', { credentials: 'same-origin' });
-    if (!res.ok) return;
+    if (!isJson(res)) return;
     const c = await res.json();
     setCount('notifications', c.notifications);
     setCount('chat', c.chat);

@@ -1,4 +1,7 @@
 spring:
+  # Load local secrets from .env if present (ignored when the file is missing, e.g. on Render).
+  config:
+    import: optional:file:.env[.properties]
   application:
     name: resrvit
   datasource:

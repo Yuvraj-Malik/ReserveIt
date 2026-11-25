@@ -19,7 +19,7 @@
                     </div>
                 </fieldset>
                 <div data-for="ROLE" hidden><label class="form-label" for="role">Role</label>
-                    <select class="form-select" id="role" name="role"><option th:each="r : ${roles}" th:value="${r}" th:text="${r.label} + 's'"></option></select></div>
+                    <select class="form-select" id="role" name="role"><option th:each="r : ${roles}" th:value="${r}" th:text="${r.name() == 'FACULTY'} ? 'Faculty' : ${r.label} + 's'"></option></select></div>
                 <div data-for="PERSON" hidden><label class="form-label" for="person">Person</label>
                     <select class="form-select" id="person" name="person"><option th:each="u : ${people}" th:value="${u.id}" th:text="${u.displayName} + ' · ' + ${u.role.label}"></option></select></div>
                 <div data-for="GROUP" hidden><label class="form-label" for="group">Study group</label>
