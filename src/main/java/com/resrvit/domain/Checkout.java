@@ -16,13 +16,13 @@ import java.time.LocalTime;
 @Setter
 public class Checkout extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking booking;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Equipment equipment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User issuedBy;
 
     private LocalDateTime issuedAt;
@@ -33,7 +33,7 @@ public class Checkout extends BaseEntity {
 
     private LocalDateTime returnedAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User receivedBy;
 
     private String conditionIn;

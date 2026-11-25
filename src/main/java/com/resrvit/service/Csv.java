@@ -43,7 +43,7 @@ public final class Csv {
     public static String escape(Object v) {
         String s = v == null ? "" : v.toString();
         // Guard against spreadsheet formula injection.
-        if (!s.isEmpty() && "=+-@".indexOf(s.charAt(0)) >= 0) s = "'" + s;
+        if (!s.isEmpty() && "=+-@".indexOf(s.charAt(0)) >= 0 && !s.matches("-|-?\\d+(\\.\\d+)?")) s = "'" + s;
         if (s.contains(",") || s.contains("\"") || s.contains("\n")) s = "\"" + s.replace("\"", "\"\"") + "\"";
         return s;
     }

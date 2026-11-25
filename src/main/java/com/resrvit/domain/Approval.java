@@ -16,10 +16,10 @@ import java.time.LocalTime;
 @Setter
 public class Approval extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking booking;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User actor;
 
     @Enumerated(EnumType.STRING)

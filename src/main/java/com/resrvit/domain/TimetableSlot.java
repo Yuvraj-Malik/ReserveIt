@@ -16,7 +16,7 @@ import java.time.LocalTime;
 @Setter
 public class TimetableSlot extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Room room;
 
     private int dayOfWeek;

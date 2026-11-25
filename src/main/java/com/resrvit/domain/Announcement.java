@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @Setter
 public class Announcement extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User sender;
 
     private String audience;

@@ -12,7 +12,7 @@ WORKDIR /app
 ENV TZ=Asia/Kolkata \
     SPRING_PROFILES_ACTIVE=prod \
     PORT=10000 \
-    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
+    JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=55 -XX:+UseSerialGC -Xss512k -XX:MaxMetaspaceSize=160m"
 COPY --from=build /app/target/resrvit.jar app.jar
 EXPOSE 10000
 ENTRYPOINT ["java", "-jar", "/app/app.jar"]

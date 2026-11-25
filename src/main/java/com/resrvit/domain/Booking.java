@@ -47,26 +47,26 @@ public class Booking extends BaseEntity {
     @JdbcTypeCode(SqlTypes.VARCHAR)
     private BookingStatus status;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User requester;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private StudyGroup group;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Society society;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Room room;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lab lab;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private EquipmentType equipmentType;
 
     /** The specific item, assigned on approval (items of a type are interchangeable). */
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Equipment equipment;
 
     private LocalDate slotDate;
@@ -80,7 +80,7 @@ public class Booking extends BaseEntity {
 
     private String reasonText;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private EvaluationSchedule evaluation;
 
     private boolean protectedEval;
@@ -96,18 +96,18 @@ public class Booking extends BaseEntity {
     /** Bumped with nothing free within 7 days: stays first in line for the next item. */
     private boolean waitlistPriority;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User claimedBy;
     private LocalDateTime claimedAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User decidedBy;
     private LocalDateTime decidedAt;
     private String decisionNote;
 
     private String qrToken;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking previousBooking;
 
     private boolean renewalReminderSent;

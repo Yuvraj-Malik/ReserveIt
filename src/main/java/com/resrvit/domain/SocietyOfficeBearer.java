@@ -16,10 +16,10 @@ import java.time.LocalTime;
 @Setter
 public class SocietyOfficeBearer extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Society society;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User user;
 
     private String position;

@@ -16,16 +16,16 @@ import java.time.LocalTime;
 @Setter
 public class Incident extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking booking;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Equipment equipment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lab lab;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User reportedBy;
 
     private String description;
@@ -38,7 +38,7 @@ public class Incident extends BaseEntity {
 
     private LocalDateTime resolvedAt;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User resolvedBy;
 
     private String resolution;

@@ -231,7 +231,7 @@ public class AdminController {
             return "redirect:/admin/timetable";
         }
         model.addAttribute("result", collisions.applyTimetable(rows, currentUser.get(), true));
-        model.addAttribute("title", "New timetable: impact preview");
+        model.addAttribute("previewTitle", "New timetable: impact preview");
         model.addAttribute("confirmAction", "/admin/timetable/confirm");
         model.addAttribute("hidden", Map.of("csv", text));
         model.addAttribute("back", "/admin/timetable");
@@ -270,7 +270,7 @@ public class AdminController {
             return "redirect:/admin/calendar";
         }
         model.addAttribute("result", collisions.applyCalendar(rows, currentUser.get(), true));
-        model.addAttribute("title", "Academic calendar change: impact preview");
+        model.addAttribute("previewTitle", "Academic calendar change: impact preview");
         model.addAttribute("confirmAction", "/admin/calendar/confirm");
         model.addAttribute("hidden", Map.of("csv", text));
         model.addAttribute("back", "/admin/calendar");

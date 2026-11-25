@@ -24,13 +24,13 @@ public class Conversation extends BaseEntity {
         return kind == ConversationKind.DIRECT;
     }
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User student;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lab lab;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Booking booking;
 
     private String subject;

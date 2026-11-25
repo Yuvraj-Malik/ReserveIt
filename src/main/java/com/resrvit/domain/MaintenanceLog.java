@@ -16,10 +16,10 @@ import java.time.LocalTime;
 @Setter
 public class MaintenanceLog extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Equipment equipment;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Room room;
 
     private LocalDate startDate;
@@ -28,7 +28,7 @@ public class MaintenanceLog extends BaseEntity {
 
     private String reason;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User createdBy;
 
     private boolean active;

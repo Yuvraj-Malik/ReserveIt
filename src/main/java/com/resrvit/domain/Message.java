@@ -16,10 +16,10 @@ import java.time.LocalTime;
 @Setter
 public class Message extends BaseEntity {
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Conversation conversation;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private User sender;
 
     private String ciphertext;

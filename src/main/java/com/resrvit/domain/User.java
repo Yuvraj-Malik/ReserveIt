@@ -30,10 +30,10 @@ public class User extends BaseEntity {
     @JdbcTypeCode(SqlTypes.VARCHAR)
     private UserStatus status;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Department department;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private Lab lab;
 
     private String rollNo;

@@ -204,7 +204,7 @@ public class AssistantController {
             checkScope(equipmentId, roomId);
             CollisionService.Result r = collisions.applyMaintenance(equipmentId, roomId, from, to, reason, currentUser.get(), true);
             model.addAttribute("result", r);
-            model.addAttribute("title", "Maintenance block: impact preview");
+            model.addAttribute("previewTitle", "Maintenance block: impact preview");
             model.addAttribute("confirmAction", "/assistant/maintenance/confirm");
             model.addAttribute("hidden", Map.of("equipmentId", equipmentId == null ? "" : equipmentId.toString(),
                     "roomId", roomId == null ? "" : roomId.toString(), "from", from.toString(), "to", to.toString(), "reason", reason));

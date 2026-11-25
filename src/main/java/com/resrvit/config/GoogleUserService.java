@@ -39,9 +39,10 @@ public class GoogleUserService extends OidcUserService {
     private final TimeService time;
 
     @Override
-    @Transactional
+    // Keep the new account even though we throw to show the "pending" message (Spring rolls back on runtime exceptions by default).
+    @Transactional(noRollbackFor = OAuth2AuthenticationException.class)
     public OidcUser loadUser(OidcUserRequest request) throws OAuth2AuthenticationException {
-        OidcUser google = super.loadUser(request);
+        OidcUser google = fetchFromGoogle(request);
         String domain = settings.emailDomain();
         String email = google.getEmail() == null ? "" : google.getEmail().toLowerCase(Locale.ROOT);
         Object hd = google.getClaims().get("hd");
@@ -75,6 +76,11 @@ public class GoogleUserService extends OidcUserService {
         if (u.getStatus() != UserStatus.ACTIVE) throw fail("inactive");
         return new DefaultOidcUser(List.of(new SimpleGrantedAuthority("ROLE_" + u.getRole().name())),
                 google.getIdToken(), google.getUserInfo(), "email");
+    }
+
+    /** Calls Google; a separate method so tests can replace it. */
+    protected OidcUser fetchFromGoogle(OidcUserRequest request) {
+        return super.loadUser(request);
     }
 
     private static OAuth2AuthenticationException fail(String code) {
